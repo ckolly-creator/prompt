@@ -1,0 +1,1257 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ma machine à prompts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Créer des prompts pédagogiques structurés selon les méthodes C.A.D.R.E. ou A.C.T.I.F. – fonctionne hors ligne, sans compte.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&display=swap">
+<style>
+/* Layout : cahier à carreaux ; en-tête avec onglets de méthode, puis une vue à la fois (accueil / formulaire 2 colonnes / résultat 2 colonnes). Une couleur par lettre, palette propre à chaque méthode (--s0…--s4). */
+:root{
+  --bg:#F3F5FA; --grid:rgba(37,99,201,.07); --surface:#FFFFFF; --surface-2:#EDF0F7;
+  --ink:#17203A; --muted:#58617D; --line:#D7DDEA; --shadow:0 1px 2px rgba(23,32,58,.06),0 8px 24px rgba(23,32,58,.07);
+  --c:#2563C9; --a:#C5431E; --d:#11845A; --r:#7445C6; --e:#956400;
+  --x0:#0B7482; --x1:#3949AB; --x2:#B4285F; --x3:#557318; --x4:#B05000;
+  --on-accent:#FFFFFF; --warn-bg:#FFF4D6; --warn-ink:#6B4A00; --mark:#FFE08A;
+  --font-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --font-body:"Atkinson Hyperlegible","Segoe UI",system-ui,-apple-system,sans-serif;
+  --radius:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11141C; --grid:rgba(122,167,255,.05); --surface:#1A1F2B; --surface-2:#232A38;
+  --ink:#E8ECF4; --muted:#9BA4BA; --line:#2E3647; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  --c:#7FAAFF; --a:#FF916E; --d:#4BD09B; --r:#B998FF; --e:#F0C24B;
+  --x0:#4FC7D6; --x1:#8C9EFF; --x2:#FF7FAD; --x3:#A9CF5A; --x4:#FFA05C;
+  --on-accent:#10131A; --warn-bg:#3A2F12; --warn-ink:#F5D98A; --mark:#6B5A1C; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#11141C; --grid:rgba(122,167,255,.05); --surface:#1A1F2B; --surface-2:#232A38;
+  --ink:#E8ECF4; --muted:#9BA4BA; --line:#2E3647; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  --c:#7FAAFF; --a:#FF916E; --d:#4BD09B; --r:#B998FF; --e:#F0C24B;
+  --x0:#4FC7D6; --x1:#8C9EFF; --x2:#FF7FAD; --x3:#A9CF5A; --x4:#FFA05C;
+  --on-accent:#10131A; --warn-bg:#3A2F12; --warn-ink:#F5D98A; --mark:#6B5A1C; color-scheme:dark;
+}
+body{--s0:var(--c);--s1:var(--a);--s2:var(--d);--s3:var(--r);--s4:var(--e)}
+body.m-actif{--s0:var(--x0);--s1:var(--x1);--s2:var(--x2);--s3:var(--x3);--s4:var(--x4)}
+*{box-sizing:border-box}
+body{
+  background-color:var(--bg); color:var(--ink); font-family:var(--font-body); font-size:16px; line-height:1.5;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:22px 22px;
+}
+.app{max-width:1200px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 40px}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:1.15}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--step,var(--s0));outline-offset:2px;border-radius:8px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* En-tête */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:8px 18px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;background:none;border:0;padding:4px;cursor:pointer;text-align:left}
+.tiles{display:flex;gap:3px}
+.tiles i{font-style:normal;font-family:var(--font-display);font-weight:800;width:26px;height:26px;display:grid;place-items:center;border-radius:7px;color:var(--on-accent);font-size:15px;transition:background .25s}
+.tiles i:nth-child(odd){transform:rotate(-4deg)} .tiles i:nth-child(even){transform:rotate(3deg)}
+.tiles i:nth-child(1){background:var(--s0)} .tiles i:nth-child(2){background:var(--s1)} .tiles i:nth-child(3){background:var(--s2)} .tiles i:nth-child(4){background:var(--s3)} .tiles i:nth-child(5){background:var(--s4)}
+.brand-txt strong{display:block;font-family:var(--font-display);font-size:17px;line-height:1.1}
+.brand-txt small{color:var(--muted);font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.top-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.method{display:flex;align-items:center;gap:8px}
+.method>span{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.method-tabs{display:inline-flex;padding:4px;border-radius:14px;background:var(--surface);border:1px solid var(--line);gap:4px}
+.method-tabs button{border:0;background:transparent;border-radius:10px;padding:7px 14px;font-family:var(--font-display);font-weight:700;font-size:15px;letter-spacing:.06em;cursor:pointer;color:var(--muted);min-height:38px}
+.method-tabs button:hover{color:var(--ink)}
+.method-tabs button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.pill{font-size:13px;color:var(--muted);border:1px solid var(--line);background:var(--surface);padding:5px 12px;border-radius:999px;display:inline-flex;gap:6px;align-items:center}
+.pill svg{width:14px;height:14px}
+
+/* Boutons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 18px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;font-weight:700;font-size:15px;transition:transform .12s,background .12s,border-color .12s;text-decoration:none}
+.btn:hover{border-color:var(--ink)} .btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.btn.primary:hover{background:color-mix(in srgb,var(--ink) 85%,var(--s0))}
+.btn.surprise{border-style:dashed;border-color:var(--r);color:var(--r)}
+.btn.surprise:hover{background:color-mix(in srgb,var(--r) 10%,var(--surface))}
+.btn.confirm{background:var(--a);border-color:var(--a);color:var(--on-accent)}
+.btn svg{width:18px;height:18px;flex:none}
+.btn.big{min-height:54px;font-size:17px}
+
+/* Accueil */
+.hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px;align-items:end;padding-block:18px 26px}
+.hero h1{font-size:clamp(2.3rem,5.5vw,4rem);font-weight:800;letter-spacing:-.02em}
+.hero h1 em{font-style:normal;background:linear-gradient(transparent 62%,color-mix(in srgb,var(--s4) 35%,transparent) 62%)}
+.hero p{color:var(--muted);font-size:18px;max-width:46ch;margin:12px 0 0}
+.hero p b{color:var(--ink)}
+.strip-wrap{display:grid;gap:8px}
+.strip-wrap .switch-hint{margin:0;font-size:13px;color:var(--muted)}
+.cadre-strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.cadre-strip div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center;min-width:0}
+.cadre-strip b{display:block;font-family:var(--font-display);font-size:28px;line-height:1}
+.cadre-strip div:nth-child(1) b{color:var(--s0)} .cadre-strip div:nth-child(2) b{color:var(--s1)} .cadre-strip div:nth-child(3) b{color:var(--s2)} .cadre-strip div:nth-child(4) b{color:var(--s3)} .cadre-strip div:nth-child(5) b{color:var(--s4)}
+.cadre-strip span{font-size:12px;color:var(--muted);display:block;overflow:hidden;text-overflow:ellipsis}
+.entries{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.entry{position:relative;display:flex;flex-direction:column;gap:10px;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:20px;padding:24px;cursor:pointer;box-shadow:var(--shadow);transition:transform .15s,border-color .15s;overflow:hidden}
+.entry:hover{transform:translateY(-3px);border-color:var(--ink)}
+.entry h2{font-size:clamp(1.35rem,2.6vw,1.75rem);font-weight:700;max-width:16ch}
+.entry .ill{position:absolute;right:-8px;top:-8px;width:120px;height:120px;opacity:.9}
+.entry .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;max-width:calc(100% - 40px)}
+.entry .tags span{font-size:13px;background:var(--surface-2);border-radius:999px;padding:3px 10px;color:var(--muted)}
+.entry .go{margin-top:auto;font-weight:700;display:flex;align-items:center;gap:6px;padding-top:8px}
+.entry.peda .go{color:var(--c)} .entry.admin .go{color:var(--d)}
+.surprise-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:22px 0 34px;padding:14px 18px;border:1.5px dashed color-mix(in srgb,var(--r) 45%,var(--line));border-radius:16px;background:color-mix(in srgb,var(--r) 5%,var(--surface))}
+.surprise-row p{margin:0;color:var(--muted);flex:1 1 220px}
+.section-title{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-family:var(--font-body);font-weight:700;margin:0 0 12px}
+.examples-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.ex-card{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .12s}
+.ex-card:hover{border-color:var(--ink)}
+.ex-card .kind{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.ex-card.peda .kind{color:var(--c)} .ex-card.admin .kind{color:var(--d)}
+.ex-card strong{font-family:var(--font-display);font-size:17px;line-height:1.25}
+.ex-card span.sub{color:var(--muted);font-size:14px}
+
+/* Formulaire */
+.stage-wrap[data-step="0"]{--step:var(--s0)} .stage-wrap[data-step="1"]{--step:var(--s1)} .stage-wrap[data-step="2"]{--step:var(--s2)}
+.stage-wrap[data-step="3"]{--step:var(--s3)} .stage-wrap[data-step="4"]{--step:var(--s4)}
+.form-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.eyebrow{margin:0 0 4px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+.form-head h1{font-size:clamp(1.5rem,3.4vw,2.2rem)}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.stepper{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.st{--sc:var(--s0);display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;text-align:left;min-width:0}
+.st[data-step="1"]{--sc:var(--s1)} .st[data-step="2"]{--sc:var(--s2)} .st[data-step="3"]{--sc:var(--s3)} .st[data-step="4"]{--sc:var(--s4)}
+.st b{flex:none;width:32px;height:32px;border-radius:9px;display:grid;place-items:center;font-family:var(--font-display);font-size:18px;background:color-mix(in srgb,var(--sc) 14%,var(--surface));color:var(--sc)}
+.st span{font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st[aria-current="step"]{border-color:var(--sc);background:color-mix(in srgb,var(--sc) 8%,var(--surface))}
+.st[aria-current="step"] b{background:var(--sc);color:var(--on-accent)}
+.st .ok{margin-left:auto;flex:none;width:18px;height:18px;color:var(--sc);visibility:hidden}
+.st.done .ok{visibility:visible}
+.progress{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:8px 0 18px}
+.progress i{height:6px;border-radius:6px;background:var(--line);transition:background .2s}
+.progress i.on:nth-child(1){background:var(--s0)} .progress i.on:nth-child(2){background:var(--s1)} .progress i.on:nth-child(3){background:var(--s2)} .progress i.on:nth-child(4){background:var(--s3)} .progress i.on:nth-child(5){background:var(--s4)}
+.progress-label{font-size:13px;color:var(--muted);margin:-12px 0 16px}
+.form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,400px);gap:22px;align-items:start}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:var(--shadow);min-width:0}
+.panel-head{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.panel-head .big-letter{width:54px;height:54px;border-radius:14px;background:var(--step);color:var(--on-accent);display:grid;place-items:center;font-family:var(--font-display);font-weight:800;font-size:30px;flex:none;transform:rotate(-3deg)}
+.panel-head h2{font-size:clamp(1.3rem,2.6vw,1.7rem)}
+.panel-head p{margin:2px 0 0;color:var(--muted)}
+.panel-head h2:focus{outline:none}
+.fields{display:grid;gap:20px}
+.fields:empty{display:none}
+.panel>.warn{margin-top:16px}
+.row2{display:grid;grid-template-columns:minmax(0,160px) minmax(0,1fr);gap:16px}
+.field{display:grid;gap:7px;min-width:0;border:0;padding:0;margin:0}
+.field>label,.field>legend{font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0}
+.field legend{margin-bottom:7px}
+.req{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--step);border:1px solid currentColor;border-radius:999px;padding:0 7px;line-height:18px}
+.opt{font-size:12px;font-weight:400;color:var(--muted)}
+input[type=text],input[type=number],select,textarea{width:100%;min-height:46px;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);transition:border-color .12s}
+textarea{min-height:92px;resize:vertical}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 20px) 50%,calc(100% - 14px) 50%;background-size:6px 6px;background-repeat:no-repeat;padding-right:36px}
+input:focus,select:focus,textarea:focus{border-color:var(--step);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--step) 22%,transparent)}
+.hint{margin:0;font-size:13px;color:var(--muted)}
+.field.invalid select,.field.invalid input,.field.invalid .chips{border-color:var(--a);box-shadow:0 0 0 3px color-mix(in srgb,var(--a) 20%,transparent);border-radius:12px}
+.err{margin:0;font-size:13px;color:var(--a);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative;cursor:pointer}
+.chip input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.chip span{display:inline-flex;align-items:center;min-height:40px;padding:7px 14px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);font-size:15px;transition:all .12s}
+.chip:hover span{border-color:var(--step)}
+.chip input:checked+span{background:var(--step);border-color:var(--step);color:var(--on-accent);font-weight:700}
+.chip input:focus-visible+span{outline:3px solid var(--step);outline-offset:2px}
+.checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 16px}
+.check{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:10px;cursor:pointer}
+.check:hover{background:var(--surface-2)}
+.check input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--step);flex:none}
+.roles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.role{position:relative;display:block;cursor:pointer}
+.role input{position:absolute;opacity:0;inset:0;margin:0}
+.role span{display:block;height:100%;border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;transition:all .12s}
+.role span strong{display:block;font-size:15px}
+.role span em{display:block;font-style:normal;font-size:13px;color:var(--muted);margin-top:2px}
+.role input:checked+span{border-color:var(--step);background:color-mix(in srgb,var(--step) 9%,var(--surface));box-shadow:inset 0 0 0 1px var(--step)}
+.role input:focus-visible+span{outline:3px solid var(--step);outline-offset:2px}
+.role.auto{grid-column:1/-1}
+.role.auto span{border-style:dashed}
+.examples{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.examples .lbl{font-size:13px;color:var(--muted)}
+.ex{border:1px dashed color-mix(in srgb,var(--step) 60%,var(--line));background:color-mix(in srgb,var(--step) 6%,var(--surface));color:var(--ink);border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer;text-align:left}
+.ex:hover{border-style:solid}
+.warn{display:grid;gap:8px}
+.warn:empty{display:none}
+.warn p{margin:0;background:var(--warn-bg);color:var(--warn-ink);border-radius:10px;padding:10px 12px;font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.warn button{border:1px solid currentColor;background:transparent;color:inherit;border-radius:8px;padding:3px 10px;font-size:13px;font-weight:700;cursor:pointer}
+.note{margin:0;font-size:14px;padding:10px 12px;border-radius:10px;background:var(--surface-2);color:var(--muted);display:flex;gap:10px}
+.note svg{flex:none;width:18px;height:18px;margin-top:2px;color:var(--d)}
+.step-nav{display:flex;justify-content:space-between;gap:10px;margin-top:26px;padding-top:18px;border-top:1px solid var(--line);flex-wrap:wrap}
+.step-nav .right{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap}
+.preview{position:sticky;top:max(12px,env(safe-area-inset-top,0px));display:grid;gap:12px;min-width:0}
+.preview details{background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+.preview summary{cursor:pointer;padding:14px 18px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px;list-style:none}
+.preview summary::-webkit-details-marker{display:none}
+.preview summary small{font-weight:400;color:var(--muted);font-size:13px}
+.live{max-height:min(62vh,640px);overflow:auto;padding:0 18px 18px;font-size:13.5px}
+
+/* Prompt rendu */
+.prompt-out .sec{padding-block:4px 10px}
+.prompt-out h3{display:flex;align-items:center;gap:10px;font-size:15px;letter-spacing:.06em;text-transform:uppercase;margin:12px 0 6px}
+.prompt-out h3 b{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;color:var(--on-accent);font-size:15px;flex:none;letter-spacing:0}
+.prompt-out .L-0 h3{color:var(--s0)} .prompt-out .L-0 h3 b{background:var(--s0)}
+.prompt-out .L-1 h3{color:var(--s1)} .prompt-out .L-1 h3 b{background:var(--s1)}
+.prompt-out .L-2 h3{color:var(--s2)} .prompt-out .L-2 h3 b{background:var(--s2)}
+.prompt-out .L-3 h3{color:var(--s3)} .prompt-out .L-3 h3 b{background:var(--s3)}
+.prompt-out .L-4 h3{color:var(--s4)} .prompt-out .L-4 h3 b{background:var(--s4)}
+.prompt-out p{margin:0 0 6px;max-width:72ch}
+.prompt-out ul{margin:4px 0 6px;padding-left:20px}
+.prompt-out li{margin-bottom:3px}
+.prompt-out mark{background:var(--mark);color:inherit;border-radius:4px;padding:0 4px}
+.live.prompt-out h3{font-size:13px} .live.prompt-out h3 b{width:22px;height:22px;font-size:13px}
+
+/* Résultat */
+.result-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,320px);gap:22px;align-items:start}
+.prompt-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:24px 26px;box-shadow:var(--shadow);min-width:0}
+.pc-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:6px}
+.pc-head h1{font-size:clamp(1.5rem,3.4vw,2.1rem)}
+.meta{display:flex;flex-wrap:wrap;gap:6px}
+.meta span{font-size:13px;background:var(--surface-2);border-radius:999px;padding:3px 10px;color:var(--muted)}
+.meta span.surp{background:color-mix(in srgb,var(--r) 15%,var(--surface));color:var(--r);font-weight:700}
+.prompt-out{font-size:15.5px}
+.compare{margin:0 0 4px;font-size:14px;color:var(--muted)}
+.compare button{border:0;background:none;color:var(--ink);text-decoration:underline;text-underline-offset:3px;font-weight:700;cursor:pointer;padding:0}
+.actions{position:sticky;top:max(12px,env(safe-area-inset-top,0px));display:grid;gap:8px;min-width:0}
+.actions .btn{justify-content:flex-start;width:100%}
+.actions .btn.big{justify-content:center}
+.actions hr{border:0;border-top:1px solid var(--line);margin:6px 0;width:100%}
+.save-note{margin:0;font-size:13px;color:var(--muted);background:var(--surface-2);border-radius:10px;padding:10px 12px}
+.next{font-size:14px;color:var(--muted);padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.next strong{color:var(--ink)}
+#manual-copy{margin-top:14px;display:grid;gap:8px}
+#manual-copy p{margin:0;font-weight:700;color:var(--a)}
+#manual-copy textarea{min-height:200px;font-size:13px}
+.improve{margin-top:22px;background:var(--surface);border:1.5px solid color-mix(in srgb,var(--d) 50%,var(--line));border-radius:20px;padding:20px 24px}
+.improve h2{font-size:1.3rem;margin-bottom:12px}
+.improve ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.improve li{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:var(--surface-2)}
+.improve li span{flex:1 1 260px}
+.improve li button{border:1.5px solid var(--d);background:var(--surface);color:var(--d);font-weight:700;border-radius:10px;padding:6px 12px;cursor:pointer;min-height:36px}
+.improve li button:hover{background:var(--d);color:var(--on-accent)}
+.improve .done-msg{color:var(--d);font-weight:700;margin:0}
+.relances{margin-top:22px}
+.relances ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.relances li{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px}
+.relances li button{flex:none;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:4px 10px;font-size:13px;font-weight:700;cursor:pointer}
+.relances li button:hover{border-color:var(--ink)}
+
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+footer p{margin:0;max-width:70ch}
+
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--surface);padding:12px 18px;border-radius:12px;font-weight:700;opacity:0;pointer-events:none;transition:all .2s;z-index:20;max-width:calc(100% - 32px);text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+.view{animation:fade .25s ease}
+@keyframes fade{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+@media (max-width:960px){
+  .form-grid,.result-grid{grid-template-columns:minmax(0,1fr)}
+  .preview,.actions{position:static}
+  .actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .actions .btn.big,.actions .save-note,.actions .next,.actions hr{grid-column:1/-1}
+  .hero{grid-template-columns:minmax(0,1fr)}
+  .examples-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:700px){
+  .entries,.examples-grid,.checks,.roles,.relances ul{grid-template-columns:minmax(0,1fr)}
+  .row2{grid-template-columns:minmax(0,1fr)}
+  .st{justify-content:center;padding:8px 4px}
+  .st span,.st .ok{display:none}
+  .stage,.prompt-card{padding:18px}
+  .improve{padding:18px}
+  .panel-head .big-letter{width:46px;height:46px;font-size:26px}
+  .pill{display:none}
+}
+@media (max-width:420px){ .actions{grid-template-columns:minmax(0,1fr)} .method>span{display:none} }
+</style>
+
+<div class="app">
+  <header class="top">
+    <button class="brand" type="button" data-go="home" aria-label="Ma machine à prompts – retour à l'accueil">
+      <span class="tiles" id="logo-tiles" aria-hidden="true"><i>C</i><i>A</i><i>D</i><i>R</i><i>E</i></span>
+      <span class="brand-txt"><strong>Ma machine à prompts</strong><small>Enseignants</small></span>
+    </button>
+    <div class="top-right">
+      <div class="method" role="group" aria-label="Méthode de construction du prompt">
+        <span>Méthode</span>
+        <div class="method-tabs">
+          <button type="button" data-method="cadre" aria-pressed="true">C.A.D.R.E.</button>
+          <button type="button" data-method="actif" aria-pressed="false">A.C.T.I.F.</button>
+        </div>
+      </div>
+      <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Sans compte · rien n'est envoyé</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- ACCUEIL -->
+    <section id="view-home" class="view" aria-labelledby="home-title">
+      <div class="hero">
+        <div>
+          <h1 id="home-title">Des prompts <em>prêts à l'emploi</em> pour votre classe</h1>
+          <p>Choisissez quelques paramètres, la machine rédige un prompt structuré selon la méthode <b data-mname>C.A.D.R.E.</b></p>
+        </div>
+        <div class="strip-wrap">
+          <div class="cadre-strip" id="home-strip" aria-label="Les cinq étapes de la méthode"></div>
+          <p class="switch-hint">Deux méthodes, mêmes paramètres : changez d'onglet en haut à droite à tout moment.</p>
+        </div>
+      </div>
+
+      <div class="entries">
+        <button type="button" class="entry peda" data-start="peda">
+          <svg class="ill" viewBox="0 0 120 120" aria-hidden="true"><rect x="38" y="22" width="56" height="72" rx="6" fill="var(--c)" opacity=".14" transform="rotate(8 66 58)"/><rect x="30" y="26" width="56" height="72" rx="6" fill="var(--surface)" stroke="var(--c)" stroke-width="2.5"/><path d="M40 44h36M40 54h36M40 64h24" stroke="var(--c)" stroke-width="2.5" stroke-linecap="round"/><path d="M52 80l8 8 18-22" stroke="var(--e)" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="eyebrow" style="color:var(--c)">Module 1</span>
+          <h2>Créer une ressource pédagogique</h2>
+          <span class="tags"><span>Fiche</span><span>Escape game</span><span>Quiz</span><span>Texte différencié</span><span>+26</span></span>
+          <span class="go">Commencer <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+        </button>
+        <button type="button" class="entry admin" data-start="admin">
+          <svg class="ill" viewBox="0 0 120 120" aria-hidden="true"><rect x="24" y="36" width="72" height="50" rx="7" fill="var(--d)" opacity=".14" transform="rotate(-7 60 61)"/><rect x="24" y="34" width="72" height="50" rx="7" fill="var(--surface)" stroke="var(--d)" stroke-width="2.5"/><path d="M26 38l34 26 34-26" stroke="var(--d)" stroke-width="2.5" fill="none" stroke-linejoin="round"/><circle cx="92" cy="34" r="10" fill="var(--a)"/></svg>
+          <span class="eyebrow" style="color:var(--d)">Module 2</span>
+          <h2>Réaliser une tâche administrative</h2>
+          <span class="tags"><span>Courrier aux parents</span><span>FALC</span><span>Ordre du jour</span><span>+12</span></span>
+          <span class="go">Commencer <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+        </button>
+      </div>
+
+      <div class="surprise-row">
+        <button type="button" class="btn surprise" id="btn-surprise-home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg>Surprise !</button>
+        <p>Une combinaison aléatoire de discipline, d'activité et de contraintes, pour découvrir de nouvelles idées.</p>
+      </div>
+
+      <h2 class="section-title">Exemples prêts à essayer</h2>
+      <div class="examples-grid" id="examples-grid"></div>
+    </section>
+
+    <!-- FORMULAIRE -->
+    <section id="view-form" class="view" hidden>
+      <div class="stage-wrap" id="stage-wrap" data-step="0">
+        <div class="form-head">
+          <div><p class="eyebrow" id="form-kicker">Module 1</p><h1 id="form-title">Créer une ressource pédagogique</h1></div>
+          <div class="tools">
+            <button type="button" class="btn surprise" id="btn-surprise-form">Surprise !</button>
+            <button type="button" class="btn" id="btn-reset-form" data-reset>Réinitialiser</button>
+          </div>
+        </div>
+        <nav class="stepper" id="stepper" aria-label="Étapes de la méthode"></nav>
+        <div class="progress" id="progress" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+        <p class="progress-label" id="progress-label"></p>
+        <div class="form-grid">
+          <div class="stage">
+            <form id="form-peda" data-module="peda" novalidate></form>
+            <form id="form-admin" data-module="admin" novalidate hidden></form>
+            <div hidden id="holder"></div>
+            <div class="step-nav">
+              <button type="button" class="btn" id="btn-prev">← Précédent</button>
+              <div class="right">
+                <button type="button" class="btn" id="btn-next">Suivant →</button>
+                <button type="button" class="btn primary" data-generate>Générer mon prompt</button>
+              </div>
+            </div>
+          </div>
+          <aside class="preview" aria-label="Aperçu du prompt">
+            <details id="preview-box" open>
+              <summary>Aperçu en direct <small>se met à jour à chaque choix</small></summary>
+              <div class="live prompt-out" id="preview"></div>
+            </details>
+            <button type="button" class="btn primary big" data-generate>Générer mon prompt</button>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULTAT -->
+    <section id="view-result" class="view" hidden>
+      <div class="result-grid">
+        <article class="prompt-card">
+          <div class="pc-head">
+            <div><p class="eyebrow">Votre prompt <span data-mname>C.A.D.R.E.</span></p><h1>Prêt à copier</h1></div>
+            <div class="meta" id="result-meta"></div>
+          </div>
+          <p class="compare">Même demande, autre structure : <button type="button" id="btn-swap">voir la version <span id="swap-name">A.C.T.I.F.</span></button></p>
+          <div class="prompt-out" id="prompt-out" tabindex="0" aria-label="Prompt généré"></div>
+          <div id="manual-copy" hidden>
+            <p>La copie automatique est bloquée par le navigateur. Le texte est sélectionné : appuyez sur Ctrl+C (ou ⌘+C sur Mac).</p>
+            <label for="manual-ta" class="sr">Texte du prompt</label>
+            <textarea id="manual-ta" readonly></textarea>
+          </div>
+        </article>
+        <aside class="actions" aria-label="Actions">
+          <button type="button" class="btn primary big" id="btn-copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copier le prompt</button>
+          <button type="button" class="btn" id="btn-edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Modifier mon prompt</button>
+          <button type="button" class="btn" id="btn-improve"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/></svg>Améliorer mon prompt</button>
+          <button type="button" class="btn" id="btn-save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Enregistrer (.txt)</button>
+          <hr>
+          <button type="button" class="btn surprise" id="btn-surprise-res">Surprise !</button>
+          <button type="button" class="btn" id="btn-reset-res" data-reset>Réinitialiser</button>
+          <p class="save-note" id="save-note" hidden></p>
+          <div class="next"><strong>Ensuite :</strong> collez le prompt dans l'outil d'IA autorisé par votre établissement, puis relisez toujours la réponse.</div>
+        </aside>
+      </div>
+      <section class="improve" id="improve" hidden aria-labelledby="improve-title" tabindex="-1">
+        <h2 id="improve-title">Pistes d'amélioration</h2>
+        <div id="improve-list"></div>
+      </section>
+      <section class="relances" aria-labelledby="relances-title">
+        <h2 class="section-title" id="relances-title">Relances utiles après la première réponse de l'IA</h2>
+        <ul id="relances"></ul>
+      </section>
+    </section>
+  </main>
+
+  <footer>
+    <p>Les prompts sont assemblés dans votre navigateur. Aucune inscription, aucune donnée transmise. N'y saisissez jamais de données personnelles d'élèves.</p>
+    <p>Méthodes C.A.D.R.E. et A.C.T.I.F. · Plan d'études romand (PER)</p>
+  </footer>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+"use strict";
+document.documentElement.lang = "fr";
+
+/* ---------- Outils ---------- */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const clone = o => JSON.parse(JSON.stringify(o));
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const sample = (a, n) => { const c=[...a], out=[]; while(out.length<n && c.length) out.push(c.splice(Math.floor(Math.random()*c.length),1)[0]); return out; };
+const joinFr = l => !l.length ? "" : l.length===1 ? l[0] : l.slice(0,-1).join(", ")+" et "+l[l.length-1];
+const endDot = t => { t=t.trim(); return /[.!?…:»]$/.test(t) ? t : t+"."; };
+const lowerFirst = t => (t && /^[A-ZÀ-Ý][a-zà-ÿ]/.test(t)) ? t[0].toLowerCase()+t.slice(1) : t;
+const trimDot = t => t.trim().replace(/[\s.]+$/, "");
+const cap = t => t[0].toUpperCase()+t.slice(1);
+
+/* ---------- Méthodes ---------- */
+const METHODS = {
+  cadre: {
+    name:"C.A.D.R.E.",
+    steps:[
+      {L:"C", name:"Contexte", peda:"Pour quelle classe ?", admin:"Pour qui et dans quelle situation ?"},
+      {L:"A", name:"Attente", peda:"Quelle ressource, pour quel objectif ?", admin:"Quelle tâche, pour quel objectif ?"},
+      {L:"D", name:"Détails", peda:"Durée, organisation, contraintes.", admin:"Ton, longueur, informations clés."},
+      {L:"R", name:"Rôle", peda:"Quel expert l'IA doit-elle incarner ?", admin:"Quel expert l'IA doit-elle incarner ?"},
+      {L:"E", name:"Expression attendue", peda:"Sous quelle forme recevoir la ressource ?", admin:"Sous quelle forme recevoir le document ?"}
+    ],
+    layout:{
+      peda:[["degre","domaine","classe"],["objectif","ressource","ressourceAutre"],["duree","modalite","diff","contraintes","exigences"],["role"],["format","options"]],
+      admin:[["destinataire","contexte"],["tache","langue","objectif"],["ton","longueur","infos","privacy"],["role"],["format","options"]]
+    }
+  },
+  actif: {
+    name:"A.C.T.I.F.",
+    steps:[
+      {L:"A", name:"Action", peda:"Que doit produire l'IA, et dans quel but ?", admin:"Quelle tâche, et dans quel but ?"},
+      {L:"C", name:"Contexte", peda:"Quelle classe, quelles conditions ?", admin:"Pour qui, dans quelle situation, avec quelles informations ?"},
+      {L:"T", name:"Tonalité", peda:"Sur quel ton s'adresser aux élèves ?", admin:"Sur quel ton écrire ?"},
+      {L:"I", name:"Identité", peda:"Quel expert l'IA doit-elle incarner ?", admin:"Quel expert l'IA doit-elle incarner ?"},
+      {L:"F", name:"Format", peda:"Sous quelle forme recevoir la ressource ?", admin:"Sous quelle forme et quelle longueur ?"}
+    ],
+    layout:{
+      peda:[["ressource","ressourceAutre","objectif","exigences"],["degre","domaine","classe","duree","modalite","diff","contraintes"],["tonalite","registre"],["role"],["format","options"]],
+      admin:[["tache","langue","objectif"],["destinataire","contexte","infos","privacy"],["ton","adresse"],["role"],["format","longueur","options"]]
+    }
+  }
+};
+let M = "cadre";
+const ST = () => METHODS[M].steps;
+
+/* ---------- Données : module pédagogique ---------- */
+const DEGRES = [
+  {v:"1H–2H", cyc:0, phrase:"en 1H–2H, avec des élèves de 4 à 6 ans (cycle 1)", note:"Mes élèves ne savent pas encore lire : privilégie les consignes orales, les images et les pictogrammes."},
+  {v:"3H–4H", cyc:0, phrase:"en 3H–4H, avec des élèves de 6 à 8 ans (cycle 1)", note:"Mes élèves sont des lecteurs débutants : utilise des phrases courtes, un vocabulaire simple et des supports visuels."},
+  {v:"5H–6H", cyc:1, phrase:"en 5H–6H, avec des élèves de 8 à 10 ans (cycle 2)"},
+  {v:"7H–8H", cyc:1, phrase:"en 7H–8H, avec des élèves de 10 à 12 ans (cycle 2)"},
+  {v:"9H–11H", cyc:2, phrase:"en 9H–11H, avec des élèves de 12 à 15 ans (cycle 3)"},
+  {v:"Plusieurs degrés (classe multiâge)", cyc:1, multi:true, phrase:"dans une classe multiâge qui regroupe plusieurs degrés"}
+];
+const DOMAINES = [
+  {v:"Français", dom:"Langues"}, {v:"Allemand", dom:"Langues", lang:"allemand"}, {v:"Anglais", dom:"Langues", lang:"anglais"},
+  {v:"Mathématiques", dom:"Mathématiques et Sciences de la nature"}, {v:"Sciences de la nature", dom:"Mathématiques et Sciences de la nature"},
+  {v:"Histoire", dom:"Sciences humaines et sociales"}, {v:"Géographie", dom:"Sciences humaines et sociales"}, {v:"Citoyenneté", dom:"Sciences humaines et sociales"},
+  {v:"Arts visuels", dom:"Arts"}, {v:"Musique", dom:"Arts"}, {v:"Activités créatrices et manuelles", dom:"Arts"},
+  {v:"Éducation physique", dom:"Corps et mouvement"}, {v:"Éducation nutritionnelle", dom:"Corps et mouvement"},
+  {v:"Éducation numérique", grp:"Transversal", self:"La ressource relève de l'Éducation numérique, telle que décrite dans le Plan d'études romand (PER)."},
+  {v:"Formation générale", grp:"Transversal", self:"La ressource s'inscrit dans la Formation générale du Plan d'études romand (PER)."},
+  {v:"Capacités transversales", grp:"Transversal", self:"La ressource vise le développement des Capacités transversales décrites dans le Plan d'études romand (PER)."}
+];
+const OBJ_EX = { // [cycle 1, cycle 2, cycle 3]
+  "Français":["Reconnaître et produire des rimes.","Accorder les adjectifs dans le groupe nominal.","Identifier les procédés de l'argumentation dans un texte d'opinion."],
+  "Allemand":["Découvrir quelques salutations et comptines en allemand.","Se présenter oralement (nom, âge, domicile, loisirs).","Raconter un événement passé au Perfekt."],
+  "Anglais":["Découvrir quelques mots du quotidien en anglais par des chansons.","Comprendre et utiliser les nombres et les couleurs en anglais.","Décrire sa routine quotidienne au présent simple."],
+  "Mathématiques":["Dénombrer une collection jusqu'à 20.","Comparer et ordonner des fractions simples.","Résoudre des équations du premier degré à une inconnue."],
+  "Sciences de la nature":["Observer et décrire les besoins d'une plante pour grandir.","Décrire les étapes du cycle de l'eau.","Expliquer le rôle de la photosynthèse dans un écosystème."],
+  "Histoire":["Situer des événements de sa vie sur une ligne du temps.","Comparer la vie quotidienne au Moyen Âge et aujourd'hui.","Analyser les causes de la révolution industrielle en Suisse."],
+  "Géographie":["Se repérer dans l'école à l'aide d'un plan simple.","Lire et utiliser la légende d'une carte.","Analyser les effets du tourisme sur une région alpine."],
+  "Citoyenneté":["Élaborer ensemble des règles de vie de classe.","Comprendre le rôle du conseil de classe.","Distinguer les niveaux communal, cantonal et fédéral."],
+  "Arts visuels":["Mélanger les couleurs primaires pour obtenir les couleurs secondaires.","Utiliser les couleurs chaudes et froides pour exprimer une émotion.","Analyser la composition d'une œuvre d'art."],
+  "Musique":["Reproduire un rythme simple avec des percussions corporelles.","Reconnaître les familles d'instruments.","Composer une courte séquence rythmique à plusieurs voix."],
+  "Activités créatrices et manuelles":["Découper et coller en suivant un tracé.","Réaliser un objet en suivant une fiche de construction.","Concevoir un objet utilitaire en tenant compte de contraintes techniques."],
+  "Éducation physique":["Se déplacer de différentes manières en respectant un parcours.","Coopérer dans un jeu collectif en respectant les règles.","Planifier un échauffement adapté à une activité sportive."],
+  "Éducation nutritionnelle":["Reconnaître les fruits et légumes de saison.","Composer un repas équilibré à l'aide de la pyramide alimentaire suisse.","Identifier les sucres cachés dans les boissons et les aliments transformés."],
+  "Éducation numérique":["Donner une suite d'instructions précises pour déplacer un robot ou un camarade.","Comprendre ce qu'est un algorithme à travers une activité débranchée.","Distinguer une information fiable d'une fausse information en ligne."],
+  "Formation générale":["Exprimer ses émotions avec des mots.","Gérer un conflit à l'aide des messages clairs.","Adopter des gestes écoresponsables au quotidien."],
+  "Capacités transversales":["Écouter l'autre et attendre son tour de parole.","Collaborer au sein d'un groupe en assumant un rôle.","Porter un regard réflexif sur son propre travail."]
+};
+const RES = [
+  {g:"Exercices et évaluation", v:"Fiche d'exercices", art:"une fiche d'exercices", role:"ens", fmt:"Fiche élève prête à imprimer", spec:"Propose des exercices variés et progressifs, du plus simple au plus complexe, avec des consignes courtes et un exemple résolu au début."},
+  {g:"Exercices et évaluation", v:"Quiz", art:"un quiz", role:"eval", spec:"Propose une dizaine de questions variées (vrai ou faux, réponse courte, association) qui couvrent l'ensemble de l'objectif."},
+  {g:"Exercices et évaluation", v:"QCM", art:"un QCM", role:"eval", spec:"Rédige des questions à choix multiples avec une seule bonne réponse et des distracteurs plausibles, construits à partir des erreurs fréquentes des élèves."},
+  {g:"Exercices et évaluation", v:"Évaluation formative", art:"une évaluation formative", role:"eval", spec:"Conçois une évaluation courte qui permet de situer chaque élève, avec des items ciblés et, pour chaque erreur typique, une piste de remédiation."},
+  {g:"Exercices et évaluation", v:"Grille d'autoévaluation", art:"une grille d'autoévaluation", role:"eval", fmt:"Grille d'évaluation", spec:"Formule des critères compréhensibles par les élèves, à la première personne (« Je sais… », « Je peux… »), avec une échelle visuelle simple."},
+  {g:"Exercices et évaluation", v:"Grille d'observation", art:"une grille d'observation", role:"eval", fmt:"Grille d'évaluation", spec:"Définis des critères et des indicateurs observables pendant l'activité, avec une échelle de niveaux facile à remplir en classe."},
+  {g:"Exercices et évaluation", v:"Cartes de mémorisation", art:"des cartes de mémorisation", role:"ens", fmt:"Cartes à découper", spec:"Prépare des cartes recto verso (question au recto, réponse au verso) qui reprennent l'essentiel de la notion."},
+  {g:"Exercices et évaluation", v:"Schéma à compléter", art:"un schéma à compléter", role:"didac", spec:"Décris précisément le schéma à produire, les éléments que les élèves doivent compléter et, si utile, une banque de mots."},
+  {g:"Jeux", v:"Jeu de cartes", art:"un jeu de cartes", role:"jeux", fmt:"Cartes à découper", spec:"Décris le contenu de chaque carte, les règles du jeu, le nombre de joueurs, le déroulement d'une partie et la manière de gagner."},
+  {g:"Jeux", v:"Escape game", art:"un escape game", role:"jeux", complex:true, spec:"Imagine un scénario motivant et une suite d'énigmes enchaînées, chacune mobilisant l'objectif visé, avec des indices de secours et un code final."},
+  {g:"Jeux", v:"Enquête mystère", art:"une enquête mystère", role:"jeux", complex:true, spec:"Construis une intrigue avec des indices à analyser, dont la résolution exige d'appliquer la notion travaillée."},
+  {g:"Jeux", v:"Rallye pédagogique", art:"un rallye pédagogique", role:"jeux", complex:true, spec:"Organise une série d'épreuves réparties en étapes, avec une feuille de route pour les équipes et un système de points."},
+  {g:"Jeux", v:"Jeu de plateau", art:"un jeu de plateau", role:"jeux", complex:true, spec:"Décris le plateau (cases et parcours), les cartes questions ou défis, les règles et le matériel nécessaire."},
+  {g:"Jeux", v:"Cartes à découper", art:"des cartes à découper", role:"jeux", fmt:"Cartes à découper", spec:"Prépare des cartes (étiquettes, images ou mots) que les élèves devront trier, associer ou classer."},
+  {g:"Jeux", v:"Dominos pédagogiques", art:"des dominos pédagogiques", role:"jeux", fmt:"Cartes à découper", spec:"Prépare une série de dominos dont chaque moitié associe une question à la réponse d'un autre domino, de manière à former une boucle complète."},
+  {g:"Jeux", v:"Bingo", art:"un bingo", role:"jeux", fmt:"Cartes à découper", spec:"Prépare plusieurs grilles de bingo toutes différentes et la liste des annonces que l'enseignant lira à voix haute."},
+  {g:"Lecture et écriture", v:"Texte de lecture", art:"un texte de lecture", role:"auteur", spec:"Rédige un texte original, adapté à l'âge des élèves, qui met en jeu la notion travaillée."},
+  {g:"Lecture et écriture", v:"Texte différencié", art:"un texte différencié", role:"diff", spec:"Rédige un même texte en plusieurs versions de difficulté croissante (longueur, vocabulaire, syntaxe), en conservant le même contenu essentiel."},
+  {g:"Lecture et écriture", v:"Compréhension écrite", art:"une activité de compréhension écrite", role:"didac", spec:"Rédige un texte adapté, suivi de questions de compréhension variées (repérage, inférence, avis argumenté)."},
+  {g:"Lecture et écriture", v:"Histoire interactive", art:"une histoire interactive", role:"auteur", spec:"Écris une histoire à embranchements dans laquelle les élèves font des choix qui mobilisent la notion travaillée, avec plusieurs fins possibles."},
+  {g:"Lecture et écriture", v:"Dialogue", art:"un dialogue", role:"auteur", spec:"Écris un dialogue vivant et naturel entre plusieurs personnages, exploitable à l'oral comme à l'écrit."},
+  {g:"Démarches et recherche", v:"Situation-problème", art:"une situation-problème", role:"didac", spec:"Propose une situation concrète, proche du vécu des élèves, qui les oblige à chercher, à essayer plusieurs stratégies et à justifier leur réponse."},
+  {g:"Démarches et recherche", v:"Défi mathématique", art:"un défi mathématique", role:"didac", domains:["Mathématiques"], spec:"Propose un défi stimulant qui admet plusieurs démarches de résolution, avec des relances pour les élèves bloqués."},
+  {g:"Démarches et recherche", v:"Expérience scientifique", art:"une expérience scientifique", role:"didac", domains:["Sciences de la nature","Éducation nutritionnelle"], spec:"Décris une démarche d'investigation : question de départ, hypothèses, protocole, observations attendues et conclusion, avec les consignes de sécurité."},
+  {g:"Démarches et recherche", v:"Atelier de manipulation", art:"un atelier de manipulation", role:"active", spec:"Décris un atelier où les élèves manipulent du matériel concret pour construire la notion, avec les étapes et les questions à leur poser."},
+  {g:"Démarches et recherche", v:"Frise chronologique", art:"une frise chronologique", role:"didac", domains:["Histoire","Géographie","Citoyenneté","Sciences de la nature","Français","Arts visuels","Musique","Éducation numérique","Formation générale"], spec:"Prépare les événements à placer, avec leur date et une courte description, ainsi que la structure de la frise."},
+  {g:"Activités collectives", v:"Débat", art:"un débat", role:"active", spec:"Prépare la question de débat, des arguments de départ pour chaque position, des rôles (modérateur, secrétaire, gardien du temps) et les règles de prise de parole."},
+  {g:"Activités collectives", v:"Jeu de rôles", art:"un jeu de rôles", role:"active", spec:"Décris la situation, les rôles avec une fiche par personnage, le déroulement et un temps de retour réflexif."},
+  {g:"Activités collectives", v:"Parcours à postes", art:"un parcours à postes", role:"active", complex:true, spec:"Décris chaque poste (tâche, matériel, durée, consigne à afficher) et l'organisation des rotations."},
+  {g:"Activités collectives", v:"Activité coopérative", art:"une activité coopérative", role:"active", spec:"Conçois une tâche qui rend chaque membre du groupe indispensable, avec des rôles définis et une production commune."}
+];
+const DUREES = ["5 minutes","10 minutes","15 minutes","20 minutes","30 minutes","45 minutes","60 minutes","Plusieurs séances"];
+const DIFFS = {
+  "Aucune différenciation particulière":"",
+  "Deux niveaux de difficulté":"Propose deux niveaux de difficulté clairement identifiés (par exemple ★ et ★★), qui portent sur le même objectif.",
+  "Trois niveaux de difficulté":"Propose trois niveaux de difficulté (★, ★★, ★★★) qui portent sur le même objectif, afin que chaque élève puisse progresser à son rythme.",
+  "Aides progressives":"Prévois des aides progressives (coups de pouce gradués) que les élèves peuvent consulter au besoin.",
+  "Approfondissement pour élèves avancés":"Ajoute des défis d'approfondissement pour les élèves avancés.",
+  "Adaptation pour élèves ayant besoin de soutien":"Prévois une version adaptée pour les élèves qui ont besoin de soutien : consignes simplifiées, étayage visuel et quantité réduite.",
+  "Plusieurs degrés scolaires":"Adapte l'activité pour qu'elle puisse être menée en même temps avec des élèves de plusieurs degrés, en précisant les variantes propres à chaque degré."
+};
+const MODS = {
+  "Individuel":"Les élèves travailleront individuellement.",
+  "Binômes":"Les élèves travailleront en binômes.",
+  "Petits groupes":"Les élèves travailleront en petits groupes de 3 à 5.",
+  "Collectif":"L'activité sera menée collectivement, avec toute la classe.",
+  "Ateliers tournants":"L'activité sera organisée en ateliers tournants : précise la rotation et la durée de chaque atelier.",
+  "Autonomie":"Les élèves doivent pouvoir réaliser l'activité en autonomie, sans l'aide constante de l'enseignant."
+};
+const CONTR = {
+  "Sans écran pour les élèves":"se déroule sans écran pour les élèves",
+  "Sans matériel particulier":"ne nécessite aucun matériel particulier",
+  "Matériel facilement disponible":"utilise uniquement du matériel facilement disponible en classe",
+  "Activité à imprimer":"est prête à être imprimée (format A4, lisible en noir et blanc)",
+  "Activité manipulatoire":"fait manipuler concrètement les élèves",
+  "Activité ludique":"a une dimension ludique",
+  "Activité coopérative":"repose sur la coopération entre élèves",
+  "Activité réalisable à l'extérieur":"peut être réalisée à l'extérieur (préau, cour ou forêt)"
+};
+const EXIG = {
+  "Favoriser la participation active des élèves":"favoriser la participation active des élèves",
+  "Encourager le raisonnement":"encourager le raisonnement et la justification des réponses",
+  "Développer la créativité":"développer la créativité des élèves",
+  "Favoriser la collaboration":"favoriser la collaboration entre élèves",
+  "Prévoir une autocorrection":"prévoir un dispositif d'autocorrection",
+  "Prévoir une évaluation formative":"prévoir un moment d'évaluation formative",
+  "Inclure des exemples":"inclure des exemples résolus ou des modèles",
+  "Prévoir un prolongement":"prévoir un prolongement pour poursuivre l'apprentissage"
+};
+const TONALITES = {
+  "Bienveillante et encourageante":"bienveillante et encourageante, qui valorise les efforts des élèves",
+  "Ludique et motivante":"ludique et motivante, qui donne envie de s'engager",
+  "Narrative et immersive":"narrative et immersive, qui embarque les élèves dans une histoire",
+  "Claire et directe":"claire et directe, sans détour inutile",
+  "Rigoureuse et précise":"rigoureuse et précise, avec un vocabulaire disciplinaire exact",
+  "Humoristique":"légère et humoristique, sans jamais se moquer des élèves"
+};
+const REGISTRES = {
+  "Adapté à l'âge des élèves":"",
+  "Très simple (allophones, élèves en difficulté)":"Utilise une langue très simple (phrases courtes, mots fréquents), accessible aux élèves allophones ou en difficulté de lecture.",
+  "Enrichi (élèves avancés)":"Tu peux employer un vocabulaire enrichi pour stimuler les élèves avancés, en expliquant les mots nouveaux."
+};
+const ROLES_P = [
+  {id:"ens", label:"Enseignant expérimenté du primaire", desc:"Ressources concrètes, prêtes pour la classe", text:s=>`un·e enseignant·e expérimenté·e ${cycOf(s)===2?"de l'école obligatoire (cycle 3)":"de l'école primaire"}, habitué·e à concevoir des ressources concrètes, motivantes et directement utilisables en classe`},
+  {id:"didac", label:"Didacticien de la discipline", desc:"Obstacles d'apprentissage, progression", text:s=>`un·e didacticien·ne ${s.domaine?"de la discipline "+s.domaine:"de la discipline concernée"}, attentif·ve aux obstacles d'apprentissage et à la progression des notions`},
+  {id:"diff", label:"Spécialiste de la différenciation", desc:"Adapter à des profils variés", text:()=>"un·e spécialiste de la différenciation pédagogique, capable d'adapter une même activité à des élèves aux profils variés"},
+  {id:"jeux", label:"Concepteur de jeux pédagogiques", desc:"Engagement et règles claires", text:()=>"un·e concepteur·rice de jeux pédagogiques, qui sait rendre un apprentissage engageant sans perdre de vue l'objectif visé"},
+  {id:"eval", label:"Expert en évaluation formative", desc:"Situer les apprentissages", text:()=>"un·e expert·e en évaluation formative, qui conçoit des outils permettant aux élèves et à l'enseignant de situer les apprentissages"},
+  {id:"auteur", label:"Auteur de littérature jeunesse", desc:"Textes vivants, adaptés à l'âge", text:()=>"un·e auteur·rice de littérature jeunesse, capable d'écrire des textes vivants et adaptés à l'âge des lecteurs"},
+  {id:"active", label:"Spécialiste de la pédagogie active", desc:"Agir, chercher, échanger", text:()=>"un·e spécialiste de la pédagogie active, qui place les élèves en situation d'agir, de chercher et d'échanger"},
+  {id:"conseil", label:"Conseiller pédagogique connaissant le PER", desc:"Alignement sur le PER", text:()=>"un·e conseiller·ère pédagogique qui connaît très bien le Plan d'études romand (PER) et les moyens d'enseignement romands"},
+  {id:"num", label:"Spécialiste de l'éducation numérique", desc:"Médias, science informatique, usages", text:()=>"un·e spécialiste de l'éducation numérique, au fait des trois axes du PER : médias, science informatique et usages"}
+];
+const FORMATS_P = {
+  "Ressource complète prête à utiliser":"une ressource complète, utilisable en classe sans travail supplémentaire",
+  "Fiche élève prête à imprimer":"une fiche élève prête à imprimer, avec une mise en page claire et aérée",
+  "Cartes à découper":"cartes à découper, présentées dans un tableau dont chaque case correspond à une carte",
+  "Tableau copiable dans Word":"un tableau structuré que je pourrai copier-coller directement dans Word",
+  "Document structuré avec corrigé":"un document structuré avec titres et sous-titres, suivi d'un corrigé complet",
+  "Planification détaillée":"une planification détaillée : déroulement minuté, rôle de l'enseignant, activité des élèves et matériel",
+  "Liste d'activités":"une liste d'activités numérotées, chacune décrite précisément",
+  "Présentation en étapes":"une présentation en étapes successives, faciles à suivre",
+  "Support visuel à générer":"un support visuel : décris précisément chaque illustration et fournis pour chacune un prompt prêt à l'emploi pour un générateur d'images",
+  "Grille d'évaluation":"une grille d'évaluation avec critères, indicateurs observables et niveaux de maîtrise"
+};
+const OPTIONS_P = {
+  "Inclure le corrigé":"le corrigé complet",
+  "Inclure les consignes pour les élèves":"les consignes destinées aux élèves, formulées simplement",
+  "Inclure les objectifs d'apprentissage":"les objectifs d'apprentissage visés",
+  "Inclure le matériel nécessaire":"la liste du matériel nécessaire",
+  "Inclure des variantes":"des variantes possibles",
+  "Inclure les critères de réussite":"les critères de réussite, formulés du point de vue de l'élève (« Je sais… »)"
+};
+const QUALITY_P = [
+  "Produis le contenu intégral de la ressource et pas uniquement un plan ou une liste d'idées.",
+  "Vérifie la cohérence pédagogique, linguistique et scientifique des propositions.",
+  "N'invente pas de références officielles au PER. Si l'objectif exact n'est pas fourni, indique que son alignement doit être vérifié par l'enseignant.",
+  "Signale les éléments nécessitant une vérification humaine."
+];
+
+/* ---------- Données : module administratif ---------- */
+const TASKS = [
+  {v:"Rédiger un courrier aux parents", verb:"rédiger un courrier destiné aux parents", role:"comm", fmt:"Courrier complet (en-tête, objet, formule de politesse)", ex:"Informer les parents d'une sortie et demander leur autorisation.", spec:"Le courrier doit être compréhensible par des familles d'horizons variés et préciser clairement ce qui est attendu d'elles (réponse, date, matériel)."},
+  {v:"Reformuler une communication", verb:"reformuler une communication", role:"comm", fmt:"Deux ou trois versions au choix", ex:"Rendre un message plus clair et plus bienveillant.", source:true, spec:"Conserve toutes les informations essentielles du texte d'origine, en améliorant sa clarté et son ton."},
+  {v:"Simplifier un texte en FALC", verb:"simplifier un texte en FALC (Facile à lire et à comprendre)", role:"falc", fmt:"Document structuré avec titres", ex:"Rendre une information officielle compréhensible par toutes les familles.", source:true, spec:"Applique les règles européennes du FALC : phrases courtes, une idée par phrase, mots simples et fréquents, voix active, pas d'abréviations, informations dans un ordre logique. Suggère aussi des pictogrammes ou des illustrations utiles."},
+  {v:"Préparer un ordre du jour", verb:"préparer un ordre du jour", role:"assist", fmt:"Tableau copiable dans Word", ex:"Préparer la réunion de rentrée avec les parents.", spec:"Indique pour chaque point la durée prévue, la personne responsable et la nature du point (information, discussion ou décision)."},
+  {v:"Structurer un compte rendu", verb:"structurer un compte rendu", role:"assist", fmt:"Document structuré avec titres", ex:"Garder une trace claire des décisions du conseil des maîtres.", source:true, spec:"Distingue clairement les informations transmises, les décisions prises et les tâches à réaliser (qui, quoi, pour quand)."},
+  {v:"Préparer un entretien", verb:"préparer un entretien", role:"conseil", fmt:"Document structuré avec titres", ex:"Préparer un entretien avec des parents au sujet du travail à la maison.", spec:"Propose un déroulement (accueil, constats, échanges, pistes, suite à donner), des formulations factuelles et bienveillantes, ainsi que des questions ouvertes."},
+  {v:"Créer une check-list", verb:"créer une check-list", role:"assist", fmt:"Liste à puces", ex:"Ne rien oublier dans la préparation d'un camp de ski.", spec:"Organise les éléments par étape ou par catégorie, avec des cases à cocher et des échéances si c'est pertinent."},
+  {v:"Organiser un projet scolaire", verb:"organiser un projet scolaire", role:"projet", fmt:"Tableau copiable dans Word", ex:"Organiser une semaine thématique sur l'environnement.", spec:"Propose les étapes, un calendrier réaliste, la répartition des rôles, les ressources nécessaires et les points de vigilance."},
+  {v:"Préparer une réunion d'équipe", verb:"préparer une réunion d'équipe", role:"projet", fmt:"Document structuré avec titres", ex:"Préparer une réunion d'équipe sur le projet d'établissement.", spec:"Précise les objectifs de la réunion, un déroulement minuté, les documents à préparer et la manière de consigner les décisions."},
+  {v:"Créer un questionnaire", verb:"créer un questionnaire", role:"conseil", fmt:"Document structuré avec titres", ex:"Recueillir l'avis des parents sur les devoirs à la maison.", spec:"Varie les types de questions (choix multiples, échelles, questions ouvertes), formule-les de manière neutre et limite le temps de réponse à quelques minutes."},
+  {v:"Rédiger une information pour le site de l'école", verb:"rédiger une information pour le site internet de l'école", role:"insti", fmt:"Texte prêt à envoyer", ex:"Annoncer la fête de fin d'année sur le site de l'école.", spec:"Le texte doit être accrocheur, lisible sur écran et ne contenir aucune donnée personnelle d'élèves. Propose un titre et un chapeau."},
+  {v:"Préparer une présentation", verb:"préparer une présentation", role:"projet", fmt:"Plan diapositive par diapositive", ex:"Présenter le fonctionnement de la classe lors de la soirée des parents.", spec:"Pour chaque diapositive, propose un titre, les points clés et des notes pour l'oral."},
+  {v:"Synthétiser un document", verb:"synthétiser un document", role:"assist", fmt:"Liste à puces", ex:"Résumer une directive cantonale pour l'équipe enseignante.", source:true, spec:"Fais ressortir les idées principales, les conséquences concrètes pour les enseignants et ce qui reste à clarifier."},
+  {v:"Traduire un texte", verb:"traduire un texte", role:"trad", fmt:"Texte prêt à envoyer", ex:"Traduire une convocation pour une famille récemment arrivée.", source:true, spec:"Traduis fidèlement, dans un niveau de langue accessible aux familles, et signale les termes propres au système scolaire romand qui méritent une explication."},
+  {v:"Créer un tableau de suivi", verb:"créer un tableau de suivi", role:"assist", fmt:"Tableau copiable dans Word", ex:"Suivre les remises de travaux et les autorisations signées.", spec:"Propose des colonnes pertinentes, une ligne d'exemple remplie avec des données fictives, et explique comment l'utiliser au quotidien."}
+];
+const DEST_EX = ["Parents d'élèves","Collègues","Direction","Élèves","Intervenants externes","Autorités communales"];
+const TONS = {
+  "Professionnel":"professionnel et clair", "Chaleureux":"chaleureux et accueillant", "Bienveillant":"bienveillant et respectueux",
+  "Ferme":"ferme mais courtois, sans ambiguïté sur ce qui est attendu", "Neutre":"neutre et factuel", "Institutionnel":"institutionnel, conforme aux usages d'une communication officielle de l'école"
+};
+const ADRESSES = {
+  "Vouvoiement":"Utilise le vouvoiement.",
+  "Tutoiement":"Utilise le tutoiement.",
+  "Selon le destinataire":"Choisis entre tutoiement et vouvoiement selon le destinataire et les usages scolaires."
+};
+const LONGUEURS = {
+  "Très court":"Vise un texte très court, de quelques lignes.", "Court":"Vise un texte court, d'environ une demi-page.",
+  "Moyen":"Vise une longueur d'environ une page.", "Détaillé":"Tu peux produire un document détaillé de plusieurs pages si nécessaire."
+};
+const ROLES_A = [
+  {id:"ens", label:"Enseignant expérimenté", desc:"Polyvalent, terrain", text:"un·e enseignant·e expérimenté·e de Suisse romande, à l'aise avec les tâches administratives et la communication professionnelle"},
+  {id:"comm", label:"Spécialiste de la communication école-famille", desc:"Clarté et respect", text:"un·e spécialiste de la communication école-famille, qui sait transmettre des informations claires, respectueuses et accessibles à toutes les familles"},
+  {id:"falc", label:"Expert du FALC", desc:"Accessibilité de l'information", text:"un·e expert·e du FALC (Facile à lire et à comprendre) et de l'accessibilité de l'information"},
+  {id:"assist", label:"Assistant de direction", desc:"Organisation, mise en forme", text:"un·e assistant·e de direction expérimenté·e, rigoureux·se dans l'organisation et la mise en forme de documents"},
+  {id:"projet", label:"Chef de projet en milieu scolaire", desc:"Étapes, calendrier, rôles", text:"un·e chef·fe de projet expérimenté·e en milieu scolaire"},
+  {id:"conseil", label:"Conseiller pédagogique", desc:"Dialogue, accompagnement", text:"un·e conseiller·ère pédagogique, expérimenté·e dans l'accompagnement des enseignants et le dialogue avec les familles"},
+  {id:"trad", label:"Traducteur professionnel", desc:"Fidélité, nuances culturelles", text:"un·e traducteur·rice professionnel·le, attentif·ve aux nuances culturelles et au niveau de langue"},
+  {id:"insti", label:"Chargé de communication institutionnelle", desc:"Site, annonces officielles", text:"un·e chargé·e de communication institutionnelle pour un établissement scolaire"}
+];
+const FORMATS_A = {
+  "Texte prêt à envoyer":"un texte rédigé, prêt à être envoyé",
+  "Courrier complet (en-tête, objet, formule de politesse)":"un courrier complet avec en-tête, objet, corps du texte et formule de politesse",
+  "Liste à puces":"une liste à puces claire et hiérarchisée",
+  "Tableau copiable dans Word":"un tableau structuré que je pourrai copier-coller directement dans Word",
+  "Document structuré avec titres":"un document structuré avec titres et sous-titres",
+  "Plan diapositive par diapositive":"un plan diapositive par diapositive",
+  "Deux ou trois versions au choix":"deux ou trois versions différentes, pour que je puisse choisir"
+};
+const OPTIONS_A = {
+  "Proposer un objet ou un titre":"propose un objet ou un titre",
+  "Ajouter une version courte pour un message":"ajoute une version courte, adaptée à un message ou à une application de communication avec les familles",
+  "Lister les points à vérifier avant l'envoi":"termine par la liste des points à vérifier avant l'envoi"
+};
+const PRIVACY = "Confidentialité : ce document ne doit contenir aucune donnée personnelle ou sensible (noms d'élèves, informations de santé, situation familiale). Ces données ne doivent pas être transmises à un service non autorisé par l'employeur. Lorsqu'une telle information est nécessaire, insère un espace réservé entre crochets, par exemple [Prénom de l'élève], que je compléterai moi-même.";
+const QUALITY_A = [
+  "Produis le contenu intégral et pas uniquement un plan ou une liste d'idées.",
+  "Vérifie la cohérence et la correction linguistique du texte.",
+  "N'invente aucune information factuelle (date, lieu, montant, règlement) : utilise un espace réservé [à compléter] lorsqu'une donnée manque.",
+  "Signale les éléments nécessitant une vérification humaine."
+];
+const ADMIN_CONTEXTS = ["Rentrée scolaire d'août, nouvelle classe.","Fin du premier semestre.","Semaine précédant les vacances d'automne.","Projet d'établissement en cours de révision."];
+
+/* ---------- État ---------- */
+const PD = {degre:"", domaine:"", effectif:"", contexte:"", objectif:"", ressource:"", ressourceAutre:"", duree:"30 minutes", diff:"Aucune différenciation particulière", modalite:"Individuel", contraintes:[], exigences:[], tonalite:"Bienveillante et encourageante", registre:"Adapté à l'âge des élèves", role:"auto", format:"Ressource complète prête à utiliser", options:["Inclure les consignes pour les élèves","Inclure le corrigé"]};
+const AD = {destinataire:"", contexte:"", tache:"", langue:"", objectif:"", ton:"Professionnel", adresse:"Selon le destinataire", longueur:"Court", infos:"", role:"auto", format:"Texte prêt à envoyer", options:[]};
+const S = {view:"home", mode:"peda", step:0, visited:{peda:[0], admin:[0]}, peda:clone(PD), admin:clone(AD), surprise:false};
+const STORE = "machine-cadre-v1";
+try { const d = JSON.parse(localStorage.getItem(STORE)||"null"); if(d && d.peda && d.admin){ S.peda = Object.assign(clone(PD), d.peda); S.admin = Object.assign(clone(AD), d.admin); if(METHODS[d.method]) M = d.method; } } catch(e) {}
+function save(){ try { localStorage.setItem(STORE, JSON.stringify({peda:S.peda, admin:S.admin, method:M})); } catch(e) {} }
+
+function cycOf(s){ const d = DEGRES.find(x=>x.v===s.degre); return d ? d.cyc : 1; }
+
+/* ---------- Exemples préremplis ---------- */
+const EXAMPLES = [
+  {mode:"peda", title:"Escape game sur les fractions", sub:"7H–8H · Mathématiques · 45 min", data:{degre:"7H–8H", domaine:"Mathématiques", effectif:"22", objectif:"Comparer et ordonner des fractions simples, puis les placer sur une droite graduée.", ressource:"Escape game", duree:"45 minutes", diff:"Aides progressives", modalite:"Petits groupes", contraintes:["Sans écran pour les élèves","Activité à imprimer","Activité ludique"], exigences:["Encourager le raisonnement","Favoriser la collaboration","Prévoir une autocorrection"], tonalite:"Narrative et immersive", format:"Ressource complète prête à utiliser", options:["Inclure le corrigé","Inclure les consignes pour les élèves","Inclure le matériel nécessaire","Inclure les critères de réussite"]}},
+  {mode:"peda", title:"Texte différencié : le cycle de l'eau", sub:"5H–6H · Sciences · 3 niveaux", data:{degre:"5H–6H", domaine:"Sciences de la nature", effectif:"20", contexte:"Plusieurs élèves allophones en cours d'apprentissage du français.", objectif:"Décrire les étapes du cycle de l'eau (évaporation, condensation, précipitations, ruissellement).", ressource:"Texte différencié", duree:"30 minutes", diff:"Trois niveaux de difficulté", modalite:"Individuel", contraintes:["Sans écran pour les élèves","Activité à imprimer"], exigences:["Inclure des exemples","Prévoir une évaluation formative"], tonalite:"Claire et directe", registre:"Très simple (allophones, élèves en difficulté)", format:"Document structuré avec corrigé", options:["Inclure les consignes pour les élèves","Inclure le corrigé","Inclure les objectifs d'apprentissage"]}},
+  {mode:"peda", title:"Jeu de cartes : accord des adjectifs", sub:"5H–6H · Français · binômes", data:{degre:"5H–6H", domaine:"Français", objectif:"Accorder les adjectifs dans le groupe nominal.", ressource:"Jeu de cartes", duree:"20 minutes", diff:"Deux niveaux de difficulté", modalite:"Binômes", contraintes:["Activité ludique","Activité à imprimer","Sans écran pour les élèves"], exigences:["Favoriser la participation active des élèves","Prévoir une autocorrection"], tonalite:"Ludique et motivante", format:"Cartes à découper", options:["Inclure les consignes pour les élèves","Inclure le corrigé","Inclure des variantes"]}},
+  {mode:"peda", title:"Débat : les écrans qui captent l'attention", sub:"9H–11H · Éducation numérique", data:{degre:"9H–11H", domaine:"Éducation numérique", effectif:"24", objectif:"Identifier les mécanismes qui captent l'attention sur les réseaux sociaux et argumenter sur leurs effets.", ressource:"Débat", duree:"45 minutes", diff:"Adaptation pour élèves ayant besoin de soutien", modalite:"Collectif", contraintes:["Sans écran pour les élèves","Sans matériel particulier"], exigences:["Encourager le raisonnement","Favoriser la participation active des élèves","Prévoir une évaluation formative"], tonalite:"Rigoureuse et précise", format:"Planification détaillée", options:["Inclure les objectifs d'apprentissage","Inclure les consignes pour les élèves","Inclure les critères de réussite"]}},
+  {mode:"admin", title:"Courrier aux parents : course d'école", sub:"Ton chaleureux · courrier complet", data:{tache:"Rédiger un courrier aux parents", destinataire:"Parents d'élèves de 6H", contexte:"Course d'école d'une journée au Creux-du-Van, le jeudi 4 juin.", objectif:"Informer de la course d'école et demander l'inscription au repas de midi.", ton:"Chaleureux", adresse:"Vouvoiement", longueur:"Court", infos:"Départ à 8 h devant l'école, retour vers 16 h 30.\nPrévoir de bonnes chaussures, une gourde et une veste de pluie.\nRepas de midi à la buvette : 10 francs, inscription souhaitée.\nRéponse attendue d'ici au 22 mai.", format:"Courrier complet (en-tête, objet, formule de politesse)", options:["Proposer un objet ou un titre","Ajouter une version courte pour un message"]}},
+  {mode:"admin", title:"Information en FALC : la natation scolaire", sub:"Familles allophones · bienveillant", data:{tache:"Simplifier un texte en FALC", destinataire:"Familles allophones", contexte:"Le texte officiel de la commune sur les cours de natation est jugé trop complexe par plusieurs familles.", objectif:"Rendre l'information sur la natation scolaire compréhensible par toutes les familles.", ton:"Bienveillant", adresse:"Vouvoiement", longueur:"Très court", infos:"[Coller ici le texte d'origine à simplifier]", format:"Document structuré avec titres", options:["Lister les points à vérifier avant l'envoi"]}}
+];
+
+/* ---------- Construction des champs ---------- */
+const REQ = '<span class="req">obligatoire</span>';
+const OPT = '<span class="opt">facultatif</span>';
+const showIf = o => o.showIf ? ` data-show-if="${esc(o.showIf)}"` : "";
+function fSelect(m,k,label,opts,o={}){
+  const id=`${m}-${k}`;
+  const ph = o.placeholder ? `<option value="">${esc(o.placeholder)}</option>` : "";
+  const body = opts.map(x => typeof x==="string" ? `<option>${esc(x)}</option>` : `<optgroup label="${esc(x.g)}">${x.items.map(i=>`<option>${esc(i)}</option>`).join("")}</optgroup>`).join("");
+  return `<div class="field"${showIf(o)}><label for="${id}">${label}${o.req?REQ:""}</label><select id="${id}" data-mode="${m}" data-key="${k}">${ph}${body}</select>${o.after||""}${o.hint?`<p class="hint">${o.hint}</p>`:""}</div>`;
+}
+function fText(m,k,label,o={}){
+  const id=`${m}-${k}`;
+  const ctrl = o.area
+    ? `<textarea id="${id}" data-mode="${m}" data-key="${k}" placeholder="${esc(o.placeholder||"")}" rows="${o.rows||3}"></textarea>`
+    : `<input type="${o.type||"text"}" id="${id}" data-mode="${m}" data-key="${k}" placeholder="${esc(o.placeholder||"")}"${o.type==="number"?' min="1" max="40" inputmode="numeric"':""} autocomplete="off">`;
+  return `<div class="field"${showIf(o)}><label for="${id}">${label}${o.req?REQ:(o.optional?OPT:"")}</label>${ctrl}${o.after||""}${o.hint?`<p class="hint">${o.hint}</p>`:""}</div>`;
+}
+function fChips(m,k,label,opts,o={}){
+  const name=`${m}-${k}`, type=o.multi?"checkbox":"radio";
+  return `<fieldset class="field" id="${name}"><legend>${label}${o.req?REQ:""}${o.multi?'<span class="opt">plusieurs choix possibles</span>':""}</legend><div class="chips">${opts.map((x,i)=>`<label class="chip"><input type="${type}" name="${name}" id="${name}-${i}" value="${esc(x)}" data-mode="${m}" data-key="${k}"${o.multi?" data-multi":""}><span>${esc(x)}</span></label>`).join("")}</div>${o.hint?`<p class="hint">${o.hint}</p>`:""}</fieldset>`;
+}
+function fChecks(m,k,label,opts){
+  const name=`${m}-${k}`;
+  return `<fieldset class="field"><legend>${label}</legend><div class="checks">${opts.map((x,i)=>`<label class="check" for="${name}-${i}"><input type="checkbox" id="${name}-${i}" value="${esc(x)}" data-mode="${m}" data-key="${k}" data-multi><span>${esc(x)}</span></label>`).join("")}</div></fieldset>`;
+}
+function fRoles(m, roles){
+  const name=`${m}-role`;
+  const auto = `<label class="role auto"><input type="radio" name="${name}" id="${name}-auto" value="auto" data-mode="${m}" data-key="role"><span><strong>Choix automatique <span class="opt">(recommandé)</span></strong><em>Rôle retenu : <b id="auto-${m}">…</b></em></span></label>`;
+  return `<fieldset class="field" id="${m}-role"><legend class="sr">Rôle de l'IA</legend><div class="roles">${auto}${roles.map(r=>`<label class="role"><input type="radio" name="${name}" id="${name}-${r.id}" value="${r.id}" data-mode="${m}" data-key="role"><span><strong>${esc(r.label)}</strong><em>${esc(r.desc)}</em></span></label>`).join("")}</div></fieldset>`;
+}
+const exBox = (m,k) => `<div class="examples" id="ex-${m}-${k}"></div>`;
+const groupsOf = (list, gkey) => { const g=[]; list.forEach(x=>{ const n=x[gkey]; let e=g.find(y=>y.g===n); if(!e){e={g:n,items:[]};g.push(e);} e.items.push(x.v); }); return g; };
+const lockIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+
+function blocks(){
+  const p="peda", a="admin";
+  return {
+    peda:{
+      degre: fChips(p,"degre","Degré scolaire",DEGRES.map(d=>d.v),{req:true}),
+      domaine: fSelect(p,"domaine","Domaine d'apprentissage du PER",groupsOf(DOMAINES.map(d=>({v:d.v,g:d.grp||d.dom})),"g"),{req:true, placeholder:"Choisir une discipline…"}),
+      classe: `<div class="row2">${fText(p,"effectif","Effectif",{type:"number",placeholder:"ex. 22",optional:true})}${fText(p,"contexte","Contexte particulier",{placeholder:"ex. travail en ateliers, élèves allophones…",optional:true})}</div>`,
+      objectif: fText(p,"objectif","Objectif d'apprentissage",{area:true,rows:2,placeholder:"ex. Accorder les adjectifs dans le groupe nominal.",after:exBox(p,"objectif"),hint:"Laissé vide, l'IA proposera un objectif à faire valider."}),
+      ressource: fSelect(p,"ressource","Type de ressource",[...groupsOf(RES,"g"),{g:"Autre",items:["Autre"]}],{req:true, placeholder:"Choisir une ressource…"}),
+      ressourceAutre: fText(p,"ressourceAutre","Précisez la ressource",{placeholder:"ex. Mots croisés, carte mentale…",showIf:"ressource=Autre",req:true}),
+      duree: fChips(p,"duree","Durée de l'activité",DUREES),
+      modalite: fChips(p,"modalite","Modalité de travail",Object.keys(MODS)),
+      diff: fSelect(p,"diff","Différenciation",Object.keys(DIFFS)),
+      contraintes: fChips(p,"contraintes","Contraintes",Object.keys(CONTR),{multi:true}),
+      exigences: fChecks(p,"exigences","Exigences pédagogiques",Object.keys(EXIG)),
+      tonalite: fChips(p,"tonalite","Tonalité des contenus destinés aux élèves",Object.keys(TONALITES)),
+      registre: fChips(p,"registre","Niveau de langue",Object.keys(REGISTRES)),
+      role: fRoles(p,ROLES_P),
+      format: fSelect(p,"format","Format de la production",Object.keys(FORMATS_P),{after:`<div class="warn" id="fmt-peda"></div>`}),
+      options: fChecks(p,"options","Options complémentaires",Object.keys(OPTIONS_P))
+    },
+    admin:{
+      destinataire: fText(a,"destinataire","Destinataire",{placeholder:"ex. Parents d'élèves de 6H",after:`<div class="examples">${DEST_EX.map(d=>`<button type="button" class="ex" data-fill="admin.destinataire" data-value="${esc(d)}">${esc(d)}</button>`).join("")}</div>`}),
+      contexte: fText(a,"contexte","Contexte",{area:true,rows:3,placeholder:"ex. Course d'école d'une journée, le jeudi 4 juin.",optional:true}),
+      tache: fSelect(a,"tache","Type de tâche",TASKS.map(t=>t.v),{req:true, placeholder:"Choisir une tâche…"}),
+      langue: fText(a,"langue","Langue cible",{placeholder:"ex. portugais, tigrinya, ukrainien…",showIf:"tache=Traduire un texte"}),
+      objectif: fText(a,"objectif","Objectif de la communication",{area:true,rows:2,placeholder:"ex. Informer les parents d'une sortie et demander leur autorisation.",after:exBox(a,"objectif")}),
+      ton: fChips(a,"ton","Ton souhaité",Object.keys(TONS)),
+      adresse: fChips(a,"adresse","Formule d'adresse",Object.keys(ADRESSES)),
+      longueur: fChips(a,"longueur","Longueur souhaitée",Object.keys(LONGUEURS)),
+      infos: fText(a,"infos","Informations à intégrer",{area:true,rows:5,placeholder:"Dates, horaires, lieux, montants… ou le texte à reformuler, simplifier ou traduire.",optional:true}),
+      privacy: `<p class="note">${lockIcon}<span>N'indiquez aucun nom d'élève ni information sensible. Le prompt demandera à l'IA d'utiliser des espaces réservés comme [Prénom de l'élève].</span></p>`,
+      role: fRoles(a,ROLES_A),
+      format: fSelect(a,"format","Format attendu",Object.keys(FORMATS_A),{after:`<div class="warn" id="fmt-admin"></div>`}),
+      options: fChecks(a,"options","Options complémentaires",Object.keys(OPTIONS_A))
+    }
+  };
+}
+function buildForms(){
+  const B = blocks();
+  ["peda","admin"].forEach(m=>{
+    $(`#form-${m}`).innerHTML = [0,1,2,3,4].map(i=>`<section class="panel" data-step="${i}" ${i?"hidden":""} aria-labelledby="h-${m}-${i}"><div class="panel-head"><span class="big-letter" aria-hidden="true"></span><div><h2 id="h-${m}-${i}" tabindex="-1"></h2><p></p></div></div><div class="fields"></div><div class="warn" id="warn-${m}-${i}" aria-live="polite"></div></section>`).join("");
+    $("#holder").insertAdjacentHTML("beforeend", Object.entries(B[m]).map(([k,h])=>`<div class="fblock" data-m="${m}" data-f="${k}">${h}</div>`).join(""));
+  });
+  $("#stepper").innerHTML = [0,1,2,3,4].map(i=>`<button type="button" class="st" data-step="${i}"><b></b><span></span><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-11"/></svg></button>`).join("");
+  $("#examples-grid").innerHTML = EXAMPLES.map((e,i)=>`<button type="button" class="ex-card ${e.mode}" data-example="${i}"><span class="kind">${e.mode==="peda"?"Ressource":"Administratif"}</span><strong>${esc(e.title)}</strong><span class="sub">${esc(e.sub)}</span></button>`).join("");
+}
+// Place les blocs de champs dans les panneaux selon la méthode active
+function layout(){
+  const meth = METHODS[M];
+  ["peda","admin"].forEach(m=>{
+    const used = new Set();
+    meth.layout[m].forEach((list,i)=>{
+      const box = $(`#form-${m} .panel[data-step="${i}"] .fields`);
+      list.forEach(k=>{ const b=$(`.fblock[data-m="${m}"][data-f="${k}"]`); if(b){ box.appendChild(b); used.add(k); } });
+      const panel = $(`#form-${m} .panel[data-step="${i}"]`);
+      $(".big-letter",panel).textContent = meth.steps[i].L;
+      $("h2",panel).textContent = meth.steps[i].name;
+      $(".panel-head p",panel).textContent = meth.steps[i][m];
+    });
+    $$(`.fblock[data-m="${m}"]`).forEach(b=>{ if(!used.has(b.dataset.f)) $("#holder").appendChild(b); });
+  });
+  $$(".st").forEach((b,i)=>{ $("b",b).textContent=meth.steps[i].L; $("span",b).textContent=meth.steps[i].name; });
+  $$("#logo-tiles i").forEach((t,i)=>t.textContent=meth.steps[i].L);
+  $("#home-strip").innerHTML = meth.steps.map(s=>`<div><b>${s.L}</b><span>${s.name==="Expression attendue"?"Expression":s.name}</span></div>`).join("");
+  $$("[data-mname]").forEach(x=>x.textContent=meth.name);
+  $$(".method-tabs button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.method===M ? "true":"false"));
+  $("#swap-name").textContent = METHODS[M==="cadre"?"actif":"cadre"].name;
+  document.body.classList.toggle("m-actif", M==="actif");
+  $("#stepper").setAttribute("aria-label", `Étapes de la méthode ${meth.name}`);
+}
+function stepOf(m,key){
+  const blk = (key==="effectif" || (m==="peda" && key==="contexte")) ? "classe" : key;
+  const i = METHODS[M].layout[m].findIndex(l=>l.includes(blk));
+  return i<0 ? 0 : i;
+}
+
+/* ---------- Synchronisation état ↔ formulaire ---------- */
+function syncForm(m){
+  $$(`[data-mode="${m}"]`).forEach(el=>{
+    const v = S[m][el.dataset.key];
+    if(el.type==="radio") el.checked = (v===el.value);
+    else if(el.type==="checkbox") el.checked = Array.isArray(v) && v.includes(el.value);
+    else el.value = v==null ? "" : v;
+  });
+}
+function readControl(el){
+  const m=el.dataset.mode, k=el.dataset.key;
+  if(el.hasAttribute("data-multi")){
+    const set = new Set(S[m][k]);
+    el.checked ? set.add(el.value) : set.delete(el.value);
+    S[m][k] = Object.keys(m==="peda" ? ({contraintes:CONTR,exigences:EXIG,options:OPTIONS_P})[k] : OPTIONS_A).filter(x=>set.has(x));
+  } else if(el.type==="radio"){ if(el.checked) S[m][k]=el.value; }
+  else S[m][k]=el.value;
+  const f = el.closest(".field"); if(f && f.classList.contains("invalid")){ f.classList.remove("invalid"); const e=$(".err",f); if(e) e.remove(); }
+}
+
+/* ---------- Règles ---------- */
+function autoRolePeda(s){
+  const r = RES.find(x=>x.v===s.ressource);
+  let id = r ? r.role : "ens";
+  if(s.domaine==="Éducation numérique" && (id==="ens"||id==="didac")) id="num";
+  if(id==="ens" && ["Trois niveaux de difficulté","Plusieurs degrés scolaires","Adaptation pour élèves ayant besoin de soutien"].includes(s.diff)) id="diff";
+  return id;
+}
+function autoRoleAdmin(s){ const t=TASKS.find(x=>x.v===s.tache); return t ? t.role : "ens"; }
+function missing(m){
+  const s=S[m], out=[];
+  if(m==="peda"){
+    if(!s.degre) out.push({key:"degre",msg:"Choisissez un degré scolaire."});
+    if(!s.domaine) out.push({key:"domaine",msg:"Choisissez une discipline."});
+    if(!s.ressource) out.push({key:"ressource",msg:"Choisissez un type de ressource."});
+    else if(s.ressource==="Autre" && !s.ressourceAutre.trim()) out.push({key:"ressourceAutre",msg:"Précisez la ressource souhaitée."});
+  } else if(!s.tache) out.push({key:"tache",msg:"Choisissez un type de tâche."});
+  out.forEach(x=>x.step=stepOf(m,x.key));
+  return out.sort((a,b)=>a.step-b.step);
+}
+function warnings(m){
+  const s=S[m], w=[];
+  if(m==="peda"){
+    const r=RES.find(x=>x.v===s.ressource), d=DEGRES.find(x=>x.v===s.degre);
+    if(r && r.domains && s.domaine && !r.domains.includes(s.domaine)) w.push({key:"ressource", msg:`« ${r.v} » convient mal à la discipline ${s.domaine}. Vérifiez ce choix.`});
+    if(d && d.multi && s.diff!=="Plusieurs degrés scolaires") w.push({key:"diff", msg:"Classe multiâge : la différenciation « Plusieurs degrés scolaires » serait plus adaptée.", fix:"Appliquer", run:()=>{s.diff="Plusieurs degrés scolaires";}});
+    if(d && !d.multi && s.diff==="Plusieurs degrés scolaires") w.push({key:"diff", msg:"Différenciation par degrés demandée, mais un seul degré est sélectionné."});
+    if(s.contraintes.includes("Sans matériel particulier") && (s.contraintes.includes("Activité manipulatoire")||s.contraintes.includes("Activité à imprimer")||s.contraintes.includes("Matériel facilement disponible"))) w.push({key:"contraintes", msg:"« Sans matériel particulier » contredit une autre contrainte cochée."});
+    if(r && r.complex && ["5 minutes","10 minutes","15 minutes"].includes(s.duree)) w.push({key:"duree", msg:`Durée courte pour ${r.art} : prévoyez au moins 30 minutes.`, fix:"Passer à 45 min", run:()=>{s.duree="45 minutes";}});
+    if(d && d.v==="1H–2H" && r && ["QCM","Compréhension écrite","Texte de lecture","Fiche d'exercices"].includes(r.v)) w.push({key:"ressource", msg:"En 1H–2H, les élèves ne lisent pas encore : le prompt demandera une version orale ou illustrée."});
+    if(s.modalite==="Individuel" && s.contraintes.includes("Activité coopérative")) w.push({key:"modalite", msg:"Travail individuel et activité coopérative : choisissez plutôt binômes ou petits groupes.", fix:"Petits groupes", run:()=>{s.modalite="Petits groupes";}});
+    if(M==="actif" && s.tonalite==="Humoristique" && ["Évaluation formative","Grille d'observation","Grille d'autoévaluation"].includes(s.ressource)) w.push({key:"tonalite", msg:"Une tonalité humoristique convient rarement à un outil d'évaluation.", fix:"Bienveillante", run:()=>{s.tonalite="Bienveillante et encourageante";}});
+  } else {
+    const t=TASKS.find(x=>x.v===s.tache);
+    if(t && t.v==="Traduire un texte" && !s.langue.trim()) w.push({key:"langue", msg:"Indiquez la langue cible de la traduction."});
+    if(t && t.source && !s.infos.trim()) w.push({key:"infos", msg:`Pour « ${t.v} », collez le texte d'origine dans « Informations à intégrer ».`});
+    if(t && t.v==="Simplifier un texte en FALC" && ["Institutionnel","Ferme"].includes(s.ton)) w.push({key:"ton", msg:"Le FALC s'accorde mieux avec un ton bienveillant ou neutre.", fix:"Bienveillant", run:()=>{s.ton="Bienveillant";}});
+    if(M==="actif" && s.adresse==="Tutoiement" && /parent|famille|direction|autorit/i.test(s.destinataire)) w.push({key:"adresse", msg:"Le tutoiement est inhabituel avec ce destinataire.", fix:"Vouvoiement", run:()=>{s.adresse="Vouvoiement";}});
+  }
+  w.forEach(x=>x.step=stepOf(m,x.key));
+  return w;
+}
+
+/* ---------- Assemblage du prompt ---------- */
+function fragPeda(s, prev){
+  const hole = t => prev ? `⟦${t}⟧` : `[${t}]`;
+  const d=DEGRES.find(x=>x.v===s.degre), dom=DOMAINES.find(x=>x.v===s.domaine), r=RES.find(x=>x.v===s.ressource);
+  const F={ctx:[],act:[],det:[],exig:[],role:[],fmt:[],tone:[]};
+  F.ctx.push(`J'enseigne ${d ? d.phrase : hole("degré scolaire à choisir")}, dans une école de Suisse romande.`);
+  F.ctx.push(dom ? (dom.self || `La ressource porte sur la discipline ${dom.v}, qui relève du domaine « ${dom.dom} » du Plan d'études romand (PER).`) : `La ressource porte sur ${hole("discipline à choisir")}.`);
+  const n=parseInt(s.effectif,10); if(n>0) F.ctx.push(`Ma classe compte ${n} élève${n>1?"s":""}.`);
+  if(s.contexte.trim()) F.ctx.push(`Particularités de la classe : ${endDot(lowerFirst(s.contexte.trim()))}`);
+  if(d && d.note) F.ctx.push(d.note);
+
+  if(s.ressource==="Autre") F.act.push(s.ressourceAutre.trim() ? `Je souhaite que tu conçoives la ressource suivante pour ma classe : ${endDot(lowerFirst(s.ressourceAutre.trim()))}` : `Je souhaite que tu conçoives ${hole("ressource à préciser")} pour ma classe.`);
+  else F.act.push(`Je souhaite que tu conçoives ${r ? r.art : hole("type de ressource à choisir")} pour ma classe.`);
+  const obj=s.objectif.trim();
+  F.act.push(obj ? `L'objectif d'apprentissage visé est le suivant : « ${trimDot(obj)} ».` : "L'objectif d'apprentissage n'est pas encore précisé : propose un objectif adapté au degré et à la discipline, et indique clairement qu'il devra être validé par l'enseignant.");
+  if(r) F.act.push(r.spec);
+
+  F.det.push(s.duree==="Plusieurs séances" ? "L'activité se déroulera sur plusieurs séances : propose un découpage clair, séance par séance." : `L'activité doit durer environ ${s.duree}.`);
+  if(MODS[s.modalite]) F.det.push(MODS[s.modalite]);
+  if(DIFFS[s.diff]) F.det.push(DIFFS[s.diff]);
+  const c=s.contraintes.map(x=>CONTR[x]).filter(Boolean); if(c.length) F.det.push(`Respecte les contraintes suivantes : l'activité ${joinFr(c)}.`);
+  const e=s.exigences.map(x=>EXIG[x]).filter(Boolean); if(e.length) F.exig.push(`Veille également à ${joinFr(e.map((x,i)=>i?"à "+x:x))}.`);
+
+  const rid = s.role==="auto" ? autoRolePeda(s) : s.role, role = ROLES_P.find(x=>x.id===rid) || ROLES_P[0];
+  F.role.push(`Tu es ${role.text(s)}.`);
+  if(rid!=="conseil") F.role.push("Tu connais le Plan d'études romand (PER) et la réalité des classes de Suisse romande.");
+  F.role.push("Appuie-toi sur cette expertise pour faire des choix pédagogiques justifiés.");
+
+  const fmt = FORMATS_P[s.format] || FORMATS_P["Ressource complète prête à utiliser"];
+  F.fmt.push(`Présente ta réponse sous la forme ${/^(un|une) /.test(fmt) ? "d'"+fmt : "de "+fmt}.`);
+  const o=Object.keys(OPTIONS_P).filter(x=>s.options.includes(x)).map(x=>OPTIONS_P[x]);
+  if(o.length===1) F.fmt.push(`Inclus également ${o[0]}.`); else if(o.length){ F.fmt.push("Inclus également :"); o.forEach(x=>F.fmt.push("- "+cap(x)+".")); }
+
+  const public_ = d ? (d.multi ? "à chaque degré de la classe" : `à des élèves de ${d.v}`) : "à l'âge des élèves";
+  F.lang = `Rédige en français${dom && dom.lang ? ` (les contenus destinés aux élèves seront en ${dom.lang}, avec des consignes en français si nécessaire)` : ""}, avec un vocabulaire adapté ${public_}.`;
+  if(TONALITES[s.tonalite]) F.tone.push(`Dans les contenus destinés aux élèves, adopte une tonalité ${TONALITES[s.tonalite]}.`);
+  if(REGISTRES[s.registre]) F.tone.push(REGISTRES[s.registre]);
+  F.tone.push("Dans les indications destinées à l'enseignant, reste sobre et professionnel.");
+  return F;
+}
+function fragAdmin(s, prev){
+  const hole = t => prev ? `⟦${t}⟧` : `[${t}]`;
+  const t=TASKS.find(x=>x.v===s.tache);
+  const F={ctx:[],act:[],infos:[],role:[],fmt:[]};
+  F.ctx.push("Je suis enseignant·e dans une école de Suisse romande.");
+  if(s.contexte.trim()) F.ctx.push(`Contexte : ${endDot(lowerFirst(s.contexte.trim()))}`);
+  if(s.destinataire.trim()) F.ctx.push(`Le document est destiné aux personnes suivantes : ${endDot(lowerFirst(s.destinataire.trim()))}`);
+
+  F.act.push(`Je souhaite que tu m'aides à ${t ? t.verb : hole("tâche à choisir")}${t && t.v==="Traduire un texte" && s.langue.trim() ? " du français vers le "+s.langue.trim().toLowerCase() : ""}.`);
+  if(s.objectif.trim()) F.act.push(`L'objectif est le suivant : ${endDot(lowerFirst(s.objectif.trim()))}`);
+  if(t) F.act.push(t.spec);
+
+  F.tone = `Adopte un ton ${TONS[s.ton] || TONS.Professionnel}.`;
+  F.adresse = ADRESSES[s.adresse] || "";
+  F.length = LONGUEURS[s.longueur] || "";
+  if(s.infos.trim()){
+    const lines = s.infos.trim().split(/\n+/).map(x=>x.trim()).filter(Boolean);
+    if(t && t.source){ F.infos.push('Voici le texte d\'origine, placé entre les balises """ :'); F.infos.push('"""', ...lines, '"""'); }
+    else { F.infos.push("Intègre les informations suivantes :"); F.infos.push(...lines.map(x=>"- "+x.replace(/^[-•*]\s*/,""))); }
+  }
+  const rid = s.role==="auto" ? autoRoleAdmin(s) : s.role, role = ROLES_A.find(x=>x.id===rid) || ROLES_A[0];
+  F.role.push(`Tu es ${role.text}.`);
+  F.role.push("Tu connais le fonctionnement de l'école obligatoire en Suisse romande et les usages de la communication scolaire.");
+
+  F.fmt.push(`Présente ta réponse sous la forme d'${FORMATS_A[s.format] || FORMATS_A["Texte prêt à envoyer"]}.`);
+  const o=Object.keys(OPTIONS_A).filter(x=>s.options.includes(x)).map(x=>OPTIONS_A[x]);
+  F.opts = o.length ? `Ensuite, ${joinFr(o)}.` : "";
+  return F;
+}
+const quality = list => ["Exigences de qualité :", ...list.map(q=>"- "+q)];
+function build(m, prev, method){
+  const meth = method || M, L = METHODS[meth].steps;
+  let parts;
+  if(m==="peda"){
+    const F = fragPeda(S.peda, prev);
+    parts = meth==="cadre"
+      ? [F.ctx, F.act, [...F.det, ...F.exig], F.role, [...F.fmt, F.lang, ...quality(QUALITY_P)]]
+      : [[...F.act, ...F.exig], [...F.ctx, ...F.det], [...F.tone, F.lang], F.role, [...F.fmt, ...quality(QUALITY_P)]];
+  } else {
+    const F = fragAdmin(S.admin, prev);
+    parts = meth==="cadre"
+      ? [F.ctx, F.act, [F.tone, F.length, ...F.infos, PRIVACY], F.role, [...F.fmt, F.opts, ...quality(QUALITY_A)]]
+      : [F.act, [...F.ctx, ...F.infos, PRIVACY], [F.tone, F.adresse], F.role, [...F.fmt, F.length, F.opts, ...quality(QUALITY_A)]];
+  }
+  return parts.map((l,i)=>({i, L:L[i].L, t:L[i].name, l:l.filter(Boolean)}));
+}
+const toText = secs => secs.map(x=>`${x.L} – ${x.t.toUpperCase()}\n${x.l.join("\n")}`).join("\n\n");
+function toHtml(secs){
+  return secs.map(x=>{
+    let html="", inList=false;
+    x.l.forEach(line=>{
+      const h = esc(line).replace(/⟦(.*?)⟧/g,"<mark>$1</mark>");
+      if(line.startsWith("- ")){ if(!inList){html+="<ul>";inList=true;} html+=`<li>${h.slice(2)}</li>`; }
+      else { if(inList){html+="</ul>";inList=false;} html+=`<p>${h}</p>`; }
+    });
+    if(inList) html+="</ul>";
+    return `<div class="sec L-${x.i}"><h3><b aria-hidden="true">${x.L}</b><span class="sr">${x.L} – </span>${esc(x.t)}</h3>${html}</div>`;
+  }).join("");
+}
+
+/* ---------- Mise à jour de l'interface ---------- */
+function updateDynamic(){
+  const m=S.mode, s=S[m];
+  $$(`.fblock[data-m="${m}"] [data-show-if]`).forEach(f=>{ const [k,v]=f.dataset.showIf.split("="); f.hidden = s[k]!==v; });
+  const rid = m==="peda" ? autoRolePeda(s) : autoRoleAdmin(s);
+  const roles = m==="peda" ? ROLES_P : ROLES_A;
+  $(`#auto-${m}`).textContent = (roles.find(r=>r.id===rid)||roles[0]).label;
+  const box = $(`#ex-${m}-objectif`);
+  if(m==="peda"){
+    const list = OBJ_EX[s.domaine];
+    if(list){ const c=cycOf(s); const order=[c,...[0,1,2].filter(i=>i!==c)]; const labels=["Cycle 1","Cycle 2","Cycle 3"];
+      box.innerHTML = `<span class="lbl">Exemples :</span>` + order.map(i=>`<button type="button" class="ex" data-fill="peda.objectif" data-value="${esc(list[i])}" title="${labels[i]}">${esc(list[i])}</button>`).join("");
+    } else box.innerHTML = `<span class="lbl">Choisissez une discipline pour voir des exemples.</span>`;
+  } else {
+    const t=TASKS.find(x=>x.v===s.tache);
+    box.innerHTML = t ? `<span class="lbl">Exemple :</span><button type="button" class="ex" data-fill="admin.objectif" data-value="${esc(t.ex)}">${esc(t.ex)}</button>` : "";
+  }
+  const fbox = $(`#fmt-${m}`);
+  const rec = m==="peda" ? (RES.find(x=>x.v===s.ressource)||{}).fmt : (TASKS.find(x=>x.v===s.tache)||{}).fmt;
+  fbox.innerHTML = rec && rec!==s.format ? `<p>Conseillé pour ce choix : « ${esc(rec)} ». <button type="button" data-setfmt="${esc(rec)}">Utiliser</button></p>` : "";
+  const w = warnings(m);
+  [0,1,2,3,4].forEach(i=>{ const b=$(`#warn-${m}-${i}`); if(b) b.innerHTML = w.filter(x=>x.step===i).map(x=>`<p>${esc(x.msg)}${x.fix?` <button type="button" data-warnfix="${w.indexOf(x)}">${esc(x.fix)}</button>`:""}</p>`).join(""); });
+  const miss = missing(m);
+  let done=0;
+  $$(".st").forEach((b,i)=>{
+    const ok = S.visited[m].includes(i) && !miss.some(x=>x.step===i);
+    b.classList.toggle("done", ok); if(ok) done++;
+    b.setAttribute("aria-current", i===S.step ? "step" : "false");
+    b.setAttribute("aria-label", `Étape ${ST()[i].L} : ${ST()[i].name}${ok?" (complétée)":""}`);
+  });
+  $$("#progress i").forEach((x,i)=>x.classList.toggle("on", S.visited[m].includes(i) && !miss.some(y=>y.step===i)));
+  $("#progress-label").textContent = miss.length ? `${done} étape${done>1?"s":""} sur 5 · encore ${miss.length} choix obligatoire${miss.length>1?"s":""}` : `${done} étape${done>1?"s":""} sur 5 · prêt à générer`;
+  $("#preview").innerHTML = toHtml(build(m, true));
+  $("#btn-prev").disabled = S.step===0;
+  $("#btn-next").hidden = S.step===4;
+  save();
+}
+function goStep(i, focus){
+  S.step=i; if(!S.visited[S.mode].includes(i)) S.visited[S.mode].push(i);
+  $("#stage-wrap").dataset.step=i;
+  $$(`#form-${S.mode} .panel`).forEach(p=>p.hidden = +p.dataset.step!==i);
+  updateDynamic();
+  if(focus){ const h=$(`#h-${S.mode}-${i}`); if(h) h.focus({preventScroll:true}); const top=$("#stage-wrap").getBoundingClientRect().top; if(top<0) window.scrollTo({top:window.scrollY+top-10, behavior:"smooth"}); }
+}
+function showView(v){
+  S.view=v;
+  ["home","form","result"].forEach(x=>$("#view-"+x).hidden = x!==v);
+  window.scrollTo({top:0});
+}
+function openForm(m, step=0){
+  S.mode=m;
+  $("#form-peda").hidden = m!=="peda"; $("#form-admin").hidden = m!=="admin";
+  $("#form-kicker").textContent = (m==="peda" ? "Module 1 · Ressource pédagogique" : "Module 2 · Tâche administrative") + " · " + METHODS[M].name;
+  $("#form-title").textContent = m==="peda" ? "Créer une ressource pédagogique" : "Réaliser une tâche administrative";
+  syncForm(m); showView("form"); goStep(step);
+  const h=$(`#h-${m}-${step}`); if(h) h.focus({preventScroll:true});
+}
+function focusField(m,key){ const el=$(`#${m}-${key}`); if(el) (el.tagName==="FIELDSET" ? $("input",el) : el).focus(); }
+function generate(){
+  const miss = missing(S.mode);
+  if(miss.length){
+    if(S.view!=="form") openForm(S.mode, miss[0].step); else goStep(miss[0].step);
+    miss.filter(x=>x.step===miss[0].step).forEach(x=>{
+      const el=$(`#${S.mode}-${x.key}`); const f=el && el.closest(".field");
+      if(f && !f.classList.contains("invalid")){ f.classList.add("invalid"); f.insertAdjacentHTML("beforeend",`<p class="err">${esc(x.msg)}</p>`); }
+    });
+    focusField(S.mode, miss[0].key);
+    toast(miss[0].msg);
+    return;
+  }
+  renderResult(); showView("result"); $("#prompt-out").focus({preventScroll:true});
+}
+function renderResult(){
+  const m=S.mode, s=S[m], secs=build(m,false);
+  $("#prompt-out").innerHTML = toHtml(secs);
+  const chips = m==="peda" ? [s.degre.replace(" (classe multiâge)",""), s.domaine, s.ressource==="Autre"?s.ressourceAutre:s.ressource, s.duree] : [s.tache, s.ton];
+  $("#result-meta").innerHTML = (S.surprise?'<span class="surp">Surprise</span>':"") + chips.filter(Boolean).map(c=>`<span>${esc(c)}</span>`).join("");
+  $("#manual-copy").hidden = true; $("#save-note").hidden = true;
+  const rel = m==="peda"
+    ? ["Propose une version simplifiée pour les élèves qui ont besoin de soutien.","Ajoute les erreurs fréquentes à anticiper et la manière d'y répondre.","Présente cette ressource sous forme de tableau prêt à coller dans Word.",`Vérifie que chaque consigne est compréhensible par un élève de ${s.degre.startsWith("Plusieurs")?"chaque degré":s.degre}.`]
+    : ["Propose une version plus courte.","Rends le ton un peu plus chaleureux.","Liste les informations que je dois encore vérifier ou compléter.","Propose une version adaptée à une lecture sur téléphone."];
+  $("#relances").innerHTML = rel.map(r=>`<li><span>${esc(r)}</span><button type="button" data-relance="${esc(r)}" aria-label="Copier la relance : ${esc(r)}">Copier</button></li>`).join("");
+  if(!$("#improve").hidden) renderImprove();
+}
+function setMethod(k, quiet){
+  if(!METHODS[k]) return;
+  M = k; layout();
+  if(S.view==="form"){ openForm(S.mode, S.step); }
+  else if(S.view==="result"){ renderResult(); }
+  save();
+  if(!quiet) toast(k==="actif" ? "Méthode A.C.T.I.F. : Action, Contexte, Tonalité, Identité, Format" : "Méthode C.A.D.R.E. : Contexte, Attente, Détails, Rôle, Expression");
+}
+
+/* ---------- Améliorer ---------- */
+function suggestions(){
+  const m=S.mode, s=S[m], out=[];
+  const goto = key => () => { openForm(m, stepOf(m,key)); focusField(m,key); };
+  if(m==="peda"){
+    const r=RES.find(x=>x.v===s.ressource);
+    if(s.objectif.trim().length<12) out.push({t:"Précisez l'objectif d'apprentissage : l'IA produira une ressource mieux ciblée.", b:"Compléter", go:goto("objectif")});
+    if(s.diff==="Aucune différenciation particulière") out.push({t:"Ajoutez de la différenciation : deux niveaux de difficulté permettent à chacun d'avancer.", b:"Ajouter deux niveaux", run:()=>{s.diff="Deux niveaux de difficulté";}});
+    if(!s.exigences.includes("Prévoir une évaluation formative") && !s.exigences.includes("Prévoir une autocorrection")) out.push({t:"Prévoyez une évaluation formative pour vérifier ce que les élèves ont compris.", b:"Ajouter", run:()=>{s.exigences.push("Prévoir une évaluation formative");}});
+    if(!s.options.includes("Inclure les consignes pour les élèves")) out.push({t:"Demandez des consignes pour les élèves, formulées simplement.", b:"Ajouter", run:()=>{s.options.push("Inclure les consignes pour les élèves");}});
+    if(!s.exigences.includes("Inclure des exemples")) out.push({t:"Demandez des exemples résolus : les consignes seront plus précises.", b:"Ajouter", run:()=>{s.exigences.push("Inclure des exemples");}});
+    if(!s.options.includes("Inclure les critères de réussite")) out.push({t:"Ajoutez des critères de réussite pour rendre l'objectif visible aux élèves.", b:"Ajouter", run:()=>{s.options.push("Inclure les critères de réussite");}});
+    if(r && r.fmt && s.format!==r.fmt) out.push({t:`Format plus adapté à « ${r.v} » : ${r.fmt}.`, b:"Utiliser ce format", run:()=>{s.format=r.fmt;}});
+    if(s.role!=="auto" && s.role!==autoRolePeda(s)) { const lab=ROLES_P.find(x=>x.id===autoRolePeda(s)).label; out.push({t:`Rôle plus cohérent avec la ressource : ${lab}.`, b:"Choisir ce rôle", run:()=>{s.role="auto";}}); }
+    if(M==="actif" && r && r.g==="Jeux" && !["Ludique et motivante","Narrative et immersive"].includes(s.tonalite)) out.push({t:"Pour un jeu, une tonalité ludique ou narrative renforce l'engagement.", b:"Tonalité ludique", run:()=>{s.tonalite="Ludique et motivante";}});
+    if(!s.effectif && !s.contexte.trim()) out.push({t:"Décrivez votre classe (effectif, particularités) pour un prompt plus précis.", b:"Compléter", go:goto("effectif")});
+  } else {
+    const t=TASKS.find(x=>x.v===s.tache);
+    if(!s.objectif.trim()) out.push({t:"Précisez l'objectif de la communication.", b:"Compléter", go:goto("objectif")});
+    if(!s.destinataire.trim()) out.push({t:"Indiquez le destinataire : le ton et le vocabulaire seront mieux adaptés.", b:"Compléter", go:goto("destinataire")});
+    if(!s.contexte.trim()) out.push({t:"Décrivez brièvement la situation.", b:"Compléter", go:goto("contexte")});
+    if(!s.infos.trim()) out.push({t: t&&t.source ? "Collez le texte d'origine : sans lui, l'IA ne peut pas faire la tâche." : "Ajoutez les informations clés (dates, lieux, montants) pour éviter que l'IA les invente.", b:"Compléter", go:goto("infos")});
+    if(t && t.fmt && s.format!==t.fmt) out.push({t:`Format plus adapté à « ${t.v} » : ${t.fmt}.`, b:"Utiliser ce format", run:()=>{s.format=t.fmt;}});
+    if(!s.options.includes("Lister les points à vérifier avant l'envoi")) out.push({t:"Demandez la liste des points à vérifier avant l'envoi.", b:"Ajouter", run:()=>{s.options.push("Lister les points à vérifier avant l'envoi");}});
+    if(s.role!=="auto" && s.role!==autoRoleAdmin(s)) { const lab=ROLES_A.find(x=>x.id===autoRoleAdmin(s)).label; out.push({t:`Rôle plus cohérent avec la tâche : ${lab}.`, b:"Choisir ce rôle", run:()=>{s.role="auto";}}); }
+  }
+  warnings(m).forEach(w=>out.push(w.run ? {t:w.msg, b:w.fix, run:w.run} : {t:w.msg, b:"Voir l'étape", go:()=>openForm(m,w.step)}));
+  return out;
+}
+let SUGG=[];
+function renderImprove(){
+  SUGG = suggestions();
+  $("#improve-list").innerHTML = SUGG.length
+    ? `<ul>${SUGG.map((x,i)=>`<li><span>${esc(x.t)}</span><button type="button" data-sugg="${i}">${esc(x.b)}</button></li>`).join("")}</ul>`
+    : `<p class="done-msg">Votre prompt est déjà très complet. Vous pouvez le copier.</p>`;
+}
+
+/* ---------- Surprise ---------- */
+function surprise(m){
+  if(m==="peda"){
+    const dom = pick(DOMAINES).v;
+    const r = pick(RES.filter(x=>!x.domains || x.domains.includes(dom)));
+    const d = Math.random()<0.12 ? DEGRES[5] : pick(DEGRES.slice(0,5));
+    const mats = [[], ["Sans matériel particulier"], ["Matériel facilement disponible"], ["Activité à imprimer"], ["Activité manipulatoire","Matériel facilement disponible"]];
+    const extra = sample(["Sans écran pour les élèves","Activité ludique","Activité coopérative","Activité réalisable à l'extérieur"], 1+Math.floor(Math.random()*2));
+    const chosen = [...pick(mats), ...extra];
+    const contr = Object.keys(CONTR).filter(k=>chosen.includes(k));
+    let mod = pick(Object.keys(MODS)); if(contr.includes("Activité coopérative") && (mod==="Individuel"||mod==="Autonomie")) mod="Petits groupes";
+    const ex2 = sample(Object.keys(EXIG),2), op3 = sample(Object.keys(OPTIONS_P),3);
+    S.peda = Object.assign(clone(PD), {
+      degre:d.v, domaine:dom, objectif:OBJ_EX[dom][d.cyc], ressource:r.v,
+      duree: r.complex ? pick(["30 minutes","45 minutes","60 minutes","Plusieurs séances"]) : pick(["10 minutes","15 minutes","20 minutes","30 minutes","45 minutes"]),
+      diff: d.multi ? "Plusieurs degrés scolaires" : pick(Object.keys(DIFFS).filter(k=>k!=="Plusieurs degrés scolaires")),
+      modalite: mod, contraintes: contr,
+      exigences: Object.keys(EXIG).filter(k=>ex2.includes(k)),
+      tonalite: r.g==="Jeux" ? pick(["Ludique et motivante","Narrative et immersive"]) : pick(Object.keys(TONALITES).filter(k=>k!=="Humoristique" || r.role!=="eval")),
+      registre: pick(Object.keys(REGISTRES)),
+      format: r.fmt || pick(["Ressource complète prête à utiliser","Fiche élève prête à imprimer","Document structuré avec corrigé","Présentation en étapes"]),
+      options: Object.keys(OPTIONS_P).filter(k=>op3.includes(k))
+    });
+    S.visited.peda=[0,1,2,3,4];
+  } else {
+    const t = pick(TASKS), dest = pick(DEST_EX);
+    S.admin = Object.assign(clone(AD), {
+      tache:t.v, objectif:t.ex, destinataire:dest, contexte:pick(ADMIN_CONTEXTS),
+      ton: t.v==="Simplifier un texte en FALC" ? "Bienveillant" : pick(Object.keys(TONS)),
+      adresse: dest==="Élèves" ? "Tutoiement" : pick(["Vouvoiement","Selon le destinataire"]),
+      longueur: pick(Object.keys(LONGUEURS)), format:t.fmt, langue: t.v==="Traduire un texte" ? pick(["portugais","albanais","tigrinya","ukrainien","espagnol"]) : "",
+      infos: t.source ? "[Coller ici le texte d'origine]" : "",
+      options: sample(Object.keys(OPTIONS_A),1)
+    });
+    S.visited.admin=[0,1,2,3,4];
+  }
+  S.mode=m; S.surprise=true;
+}
+
+/* ---------- Copier / enregistrer ---------- */
+async function copyText(text, okMsg){
+  try { await navigator.clipboard.writeText(text); toast(okMsg); return true; } catch(e) {}
+  try {
+    const ta=document.createElement("textarea"); ta.value=text; ta.setAttribute("readonly",""); ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select();
+    const ok=document.execCommand("copy"); ta.remove(); if(ok){ toast(okMsg); return true; }
+  } catch(e) {}
+  return false;
+}
+function slug(t){ return t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40) || "prompt"; }
+let DL=null;
+if(window.claude && typeof window.claude.use==="function"){ window.claude.use("downloads").then(d=>{ DL=d; }).catch(()=>{}); }
+async function savePrompt(){
+  const m=S.mode, s=S[m];
+  const text = toText(build(m,false));
+  const name = `prompt-${M}-${slug(m==="peda" ? (s.ressource==="Autre"?s.ressourceAutre:s.ressource)+"-"+s.domaine : s.tache)}-${new Date().toISOString().slice(0,10)}.txt`;
+  const n=$("#save-note");
+  if(DL){
+    try { await DL.save({filename:name, data:"﻿"+text}); n.hidden=false; n.textContent=`Fichier « ${name} » enregistré.`; return; }
+    catch(err){ if(err && err.code==="declined"){ n.hidden=false; n.textContent="Enregistrement annulé."; return; } }
+  }
+  try {
+    const blob = new Blob(["﻿"+text], {type:"text/plain;charset=utf-8"});
+    const url = URL.createObjectURL(blob); const a=document.createElement("a");
+    a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  } catch(e) {}
+  n.hidden=false;
+  n.textContent = `Fichier « ${name} » proposé au téléchargement. Si rien ne se passe (aperçu en ligne ou navigateur restrictif), utilisez « Copier le prompt » puis collez-le dans un document.`;
+}
+
+/* ---------- Réinitialiser (confirmation en deux clics) ---------- */
+let resetTimer=null;
+function handleReset(btn){
+  if(!btn.classList.contains("confirm")){
+    $$("[data-reset]").forEach(b=>{ b.classList.remove("confirm"); b.textContent="Réinitialiser"; });
+    btn.classList.add("confirm"); btn.textContent="Confirmer ?";
+    clearTimeout(resetTimer); resetTimer=setTimeout(()=>{ btn.classList.remove("confirm"); btn.textContent="Réinitialiser"; },3500);
+    return;
+  }
+  clearTimeout(resetTimer); btn.classList.remove("confirm"); btn.textContent="Réinitialiser";
+  const m=S.mode; S[m] = clone(m==="peda"?PD:AD); S.visited[m]=[0]; S.surprise=false;
+  $$(".field.invalid").forEach(f=>{ f.classList.remove("invalid"); const e=$(".err",f); if(e) e.remove(); });
+  $("#improve").hidden=true;
+  openForm(m,0); toast("Choix effacés, valeurs par défaut rétablies.");
+}
+
+/* ---------- Toast ---------- */
+let toastTimer=null;
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2600); }
+
+/* ---------- Événements ---------- */
+function onField(e){
+  const el=e.target; if(!el.dataset || !el.dataset.key || !el.dataset.mode) return;
+  readControl(el); S.surprise=false; updateDynamic();
+}
+document.addEventListener("input", onField);
+document.addEventListener("change", onField);
+document.addEventListener("click", async e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  if(b.dataset.method){ setMethod(b.dataset.method); return; }
+  if(b.id==="btn-swap"){ setMethod(M==="cadre"?"actif":"cadre"); return; }
+  if(b.dataset.go==="home"){ showView("home"); return; }
+  if(b.dataset.start){ S.surprise=false; openForm(b.dataset.start,0); return; }
+  if(b.dataset.example!=null){ const ex=EXAMPLES[+b.dataset.example]; S[ex.mode]=Object.assign(clone(ex.mode==="peda"?PD:AD), clone(ex.data)); S.visited[ex.mode]=[0,1,2,3,4]; S.mode=ex.mode; S.surprise=false; syncForm(ex.mode); $("#improve").hidden=true; renderResult(); showView("result"); toast("Exemple chargé : modifiez-le à votre guise."); return; }
+  if(b.classList.contains("st")){ goStep(+b.dataset.step, true); return; }
+  if(b.id==="btn-next"){ goStep(Math.min(4,S.step+1), true); return; }
+  if(b.id==="btn-prev"){ goStep(Math.max(0,S.step-1), true); return; }
+  if(b.hasAttribute("data-generate")){ generate(); return; }
+  if(b.dataset.fill){ const [m,k]=b.dataset.fill.split("."); S[m][k]=b.dataset.value; syncForm(m); const f=$(`#${m}-${k}`).closest(".field"); f.classList.remove("invalid"); updateDynamic(); $(`#${m}-${k}`).focus(); return; }
+  if(b.dataset.setfmt){ S[S.mode].format=b.dataset.setfmt; syncForm(S.mode); updateDynamic(); toast("Format mis à jour."); return; }
+  if(b.dataset.warnfix!=null){ const w=warnings(S.mode)[+b.dataset.warnfix]; if(w && w.run){ w.run(); syncForm(S.mode); updateDynamic(); toast("Correction appliquée."); } return; }
+  if(b.id==="btn-surprise-home"){ surprise("peda"); syncForm("peda"); $("#improve").hidden=true; renderResult(); showView("result"); toast("Combinaison surprise !"); return; }
+  if(b.id==="btn-surprise-form"){ surprise(S.mode); syncForm(S.mode); updateDynamic(); toast("Combinaison surprise chargée : parcourez les étapes."); return; }
+  if(b.id==="btn-surprise-res"){ surprise(S.mode); syncForm(S.mode); $("#improve").hidden=true; renderResult(); toast("Nouvelle combinaison surprise !"); return; }
+  if(b.hasAttribute("data-reset")){ handleReset(b); return; }
+  if(b.id==="btn-copy"){
+    const text=toText(build(S.mode,false));
+    const ok = await copyText(text, "Prompt copié dans le presse-papiers.");
+    if(!ok){ const box=$("#manual-copy"), ta=$("#manual-ta"); box.hidden=false; ta.value=text; ta.focus(); ta.select(); }
+    return;
+  }
+  if(b.id==="btn-edit"){ openForm(S.mode, S.step); return; }
+  if(b.id==="btn-improve"){ const imp=$("#improve"); imp.hidden=false; renderImprove(); imp.scrollIntoView({behavior:"smooth",block:"start"}); imp.focus({preventScroll:true}); return; }
+  if(b.id==="btn-save"){ savePrompt(); return; }
+  if(b.dataset.sugg!=null){ const x=SUGG[+b.dataset.sugg]; if(!x) return; if(x.run){ x.run(); S.surprise=false; syncForm(S.mode); renderResult(); renderImprove(); toast("Amélioration appliquée au prompt."); } else x.go(); return; }
+  if(b.dataset.relance){ const ok=await copyText(b.dataset.relance, "Relance copiée."); if(!ok) toast("Copie bloquée : sélectionnez le texte à la main."); return; }
+});
+document.addEventListener("keydown", e=>{ if(e.key==="Enter" && e.target.matches("input[type=text],input[type=number]")){ e.preventDefault(); if(S.step<4) goStep(S.step+1,true); else generate(); } });
+$$("form").forEach(f=>f.addEventListener("submit", e=>e.preventDefault()));
+
+/* ---------- Démarrage ---------- */
+buildForms();
+layout();
+syncForm("peda"); syncForm("admin");
+if(window.matchMedia("(max-width: 960px)").matches) $("#preview-box").open=false;
+})();
+</script>
+
+</html>
